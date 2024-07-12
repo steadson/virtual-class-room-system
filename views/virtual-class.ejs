@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Class</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+       
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+          
+            /* Dark blue */
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .virtual-class {
+            flex: 1;
+            padding: 20px;
+            
+        }
+
+        .sidebar {
+            width: 20%;
+            padding: 20px;
+            background-color: #131f2b;
+        }
+
+        #root {
+            width: 100%;
+            height: calc(100vh - 100px);
+        }
+
+        .logo {
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .link-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .send-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .datetime-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="virtual-class">
+            <h1 id="pageName">Join Virtual Class</h1>
+            <div id="root"></div>
+        </div>
+        <div class="sidebar">
+            <header class="text-center py-3">
+                <img src="/images/unical-logo.png" id="logoImage" alt="School Logo" class="img-fluid">
+                <h3 id="schoolName">UNIVERSITY OF CALABAR</h3>
+            </header>
+            
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-sm">Link</span>
+                <input type="text" id="classLink" class="form-control" aria-label="Sizing example input" readonly aria-describedby="inputGroup-sizing-sm">
+              </div>
+            <input type="datetime-local" id="startTime" class="datetime-input">
+            
+            <div class="d-grid gap-2 ">
+                <button  onclick="copyLink()" class="btn btn-primary" type="button">Copy Link</button>
+                <button onclick="sendLinkToStudents()" class="btn btn-primary" type="button">Send Link to Students</button>
+              </div>
+            <button type="button" class="btn btn-secondary " style="margin-top: 4rem;"><a
+                    href="/admin/admin-dashboard" class="text-light" style="text-decoration:none;">Back To DashBoard</a></button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js"></script>
+    <script>
+        // Assuming you're passing these variables from your server-side code
+        // Using admin data from session
+        const courseName = "<%= admin.courseTitle %>";
+        const lecturerName = "<%= admin.fullName %>";
+        const roomID = courseName + "_" + Date.now(); // Generate a unique room ID
+        const userID = Math.floor(Math.random() * 10000) + "";
+        const userName = lecturerName;
+        const appID = 88769033;
+        const serverSecret = "cc618635e7e918d355783ea252f70de4";
+
+        const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+            appID,
+            serverSecret,
+            roomID,
+            userID,
+            userName
+        );
+
+        const zp = ZegoUIKitPrebuilt.create(kitToken);
+        zp.joinRoom({
+            container: document.querySelector("#root"),
+            sharedLinks: [
+                {
+                    url: window.location.origin + '/virtual-class/' + roomID,
+                },
+            ],
+            scenario: {
+                mode: ZegoUIKitPrebuilt.GroupCall
+            },
+        });
+
+        
+        // Set the class link in the input field
+        document.getElementById('classLink').value = window.location.origin + '/virtual-class/' + roomID;
+
+
+        function copyLink() {
+            const linkInput = document.getElementById('classLink');
+            linkInput.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        }
+
+        function sendLinkToStudents() {
+            const classLink = document.getElementById('classLink').value; // Use the value from the input field
+            const startTime = document.getElementById('startTime').value;
+            if (!startTime) {
+                alert('Please set a start time for the class.');
+                return;
+            }
+
+            fetch('/api/send-link-to-students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    classLink: classLink,
+                    startTime: startTime,
+                    courseTitle: courseName
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Link sent to students successfully!');
+                    } else {
+                        alert('Failed to send link to students: ' + data.message);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('An error occurred while sending the link.');
+                });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <header class="text-center py-3">
+            <img src="/images/unical-logo.png" id="logoImage" alt="School Logo" class="img-fluid">
+            <h3 id="schoolName">UNIVERSITY OF CALABAR</h3>
+        </header>
+        
+        <main class="row justify-content-center">
+            <h1 class="display-4 mt-3 mb-4" id="pageName" >Student Sign Up</h1>
+            <div class="col-md-8 col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <form action="/Student/Student-signup" method="post" onsubmit="handleFormSubmit(event)">
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" name="fullName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="matricNumber" class="form-label">Matric No</label>
+                                <input type="text" class="form-control" id="matricNumber" name="matricNumber" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="faculty" class="form-label">Faculty/College/Institute</label>
+                                <input type="text" class="form-control" id="faculty" name="faculty" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="department" class="form-label">Department</label>
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="" selected disabled>Select department</option>
+                                    <option value="computer_science">Computer Science</option>
+                                    <option value="other_department">Other Department</option>
+                                </select>
+                            </div>
+                          
+                            <div class="mb-3">
+                                <label for="degreeLevel" class="form-label">Degree Level</label>
+                                <select class="form-select" id="degreeLevel" name="degreeLevel" required>
+                                    <option value="" selected disabled>Select degree level</option>
+                                    <option value="bachelor">Bachelor</option>
+                                    <option value="master">Master</option>
+                                    <option value="phd">PhD</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Create Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="signUpButton">
+                                <span id="signUpText">Sign Up</span>
+                                <span id="signUpSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                            <p class="font-weight-bold  mt-2">Already have an Account? <a class='text-primary' href="/student/login">Login</a></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <footer class="text-center mt-5">
+        <p>Developed by  <strong>EKPOR JOHN NKANU.</strong> This app facilitates low-bandwidth, real-time virtual classroom sessions. © 2024.</p>
+    </footer>
+    <script>
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const signUpButton = document.getElementById('signUpButton');
+            const signUpText = document.getElementById('signUpText');
+            const signUpSpinner = document.getElementById('signUpSpinner');
+            
+            // Show spinner and hide text
+            signUpText.classList.add('d-none');
+            signUpSpinner.classList.remove('d-none');
+
+            // Allow the form to be submitted
+            event.target.submit();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

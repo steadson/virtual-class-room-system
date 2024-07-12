@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - University of Calabar</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        .tt{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color:rgb(5, 34, 12) ;
+            font-weight: bold;
+            text-align: center;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+          
+            background-color: #131f2b;
+           min-height: 100vh;
+            color: #fff;
+           
+        }
+        .sidebar .nav-link {
+            color: #fff;
+        }
+        footer {
+    background-color: #131f2b;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+        .sidebar .nav-link:hover {
+            background-color: #495057;
+        }
+        .main-content {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+       
+        .cgpa {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0b3815;
+        }
+        .logo {
+            max-width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4 d-flex justify-content-between align-items-center ">
+                        <img src="/images/unical-logo.png" alt="University of Calabar Logo" class="img-fluid logo"style="max-width:4rem;">
+                        <small>UNIVERSITY OF CALABAR</small>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-book me-2"></i> Courses
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-file-earmark-text me-2"></i> Results
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-camera-video me-2"></i> Virtual Class
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+              
+                
+                <div class="main-content p-4">
+                    <div class="row align-items-center mb-4">
+                        <div class="col-md-8">
+                            <h3 class="mb-0 lh-sm">Welcome, <span style="color:green ;"><%= student.fullName %>!</span></h3>
+                            <p class="text-muted lh-sm">Matric Number: <%= student.matricNumber %></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="cgpa">3.74</div>
+                            <small class="mb-0">Current CGPA</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title tt" >Personal Information</h5>
+                                    <p><strong>Email:</strong> <%= student.email %></p>
+                                    <p><strong>Faculty:</strong> <%= student.faculty %></p>
+                                    <p><strong>Department:</strong> <%= student.department %></p>
+                                    <p><strong>Degree Level:</strong> <%= student.degreeLevel %></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title tt">Virtual Classes</h5>
+                                    <button type="button" class="btn btn-primary" onclick="refreshVirtualClasses()">
+                                        Refresh <span class="badge bg-secondary" id="classCount"><%= student.virtualClasses.length%> classes</span>
+                                    </button>
+                                    <div id="virtualClassesContainer">
+                                        <% if (student.virtualClasses && student.virtualClasses.length > 0) { %>
+                                            <div class="table-responsive">
+                                                <table class="table table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Course</th>
+                                                            <th>Start Time</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <% student.virtualClasses.forEach((virtualClass, index) => { %>
+                                                            <tr>
+                                                                <td><%= virtualClass.course %></td>
+                                                                <td><%= new Date(virtualClass.startTime).toLocaleString() %></td>
+                                                                <td>
+                                                                    <a href="<%= virtualClass.link %>" class="btn btn-primary btn-sm" target="_blank">Join Class</a>
+                                                                    <button onclick="deleteVirtualClass('<%= index %>')" class="btn btn-danger btn-sm">Delete</button>
+                                                                </td>
+                                                            </tr>
+                                                        <% }) %>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        <% } else { %>
+                                            <p>No virtual classes available.</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </main>
+            <footer class="text-center">
+                <p>Developed by  <strong>EKPOR JOHN NKANU.</strong> This app facilitates low-bandwidth, real-time virtual classroom sessions. © 2024.</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function refreshVirtualClasses() {
+    fetch('/api/refresh-virtual-classes')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateVirtualClassesDisplay(data.virtualClasses);
+            } else {
+                alert('Failed to refresh virtual classes');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('An error occurred while refreshing virtual classes');
+        });
+}
+
+function updateVirtualClassesDisplay(virtualClasses) {
+    const container = document.getElementById('virtualClassesContainer');
+    const classCount = document.getElementById('classCount');
+    classCount.textContent = `${virtualClasses.length} classes`;
+    
+    if (virtualClasses.length > 0) {
+        let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Course</th><th>Start Time</th><th>Actions</th></tr></thead><tbody>';
+        virtualClasses.forEach((virtualClass, index) => {
+            html += `
+                <tr>
+                    <td>${virtualClass.course}</td>
+                    <td>${new Date(virtualClass.startTime).toLocaleString()}</td>
+                    <td>
+                        <a href="${virtualClass.link}" class="btn btn-primary btn-sm" target="_blank">Join Class</a>
+                        <button onclick="deleteVirtualClass('${index}')" class="btn btn-danger btn-sm">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    } else {
+        container.innerHTML = '<p>No virtual classes available.</p>';
+    }
+}
+
+function deleteVirtualClass(index) {
+    if (confirm('Are you sure you want to delete this virtual class?')) {
+        fetch('/api/delete-virtual-class', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ index: index }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Virtual class deleted successfully');
+                refreshVirtualClasses(); // Refresh the list after deletion
+            } else {
+                alert('Failed to delete virtual class');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the virtual class');
+        });
+    }
+}
+
+       </script>
+</body>
+</html>

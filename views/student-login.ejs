@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <style>
+        label{
+            align-self: flex-start;
+        }
+        .max-width-500 {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .loginForm{
+            display: flex;
+            justify-content: center;
+            align-content: center;
+        }
+       
+    </style>
+    <header class="text-center py-3">
+        <img src="/images/unical-logo.png" id="logoImage" alt="School Logo" class="img-fluid">
+        <h3 id="schoolName">UNIVERSITY OF CALABAR</h3>
+    </header>
+    <h1 class="text-center mb-4 mt-3" id="pageName">Student Login</h1>
+    
+    <main class="container flex-grow-1 d-flex align-items-center">
+       
+        <div class="w-100 max-width-500">
+            <form id="loginForm" class="mt-4">
+                <div class="form-group">
+                    <label for="fullName">Name</label>
+                    <input type="text" class="form-control" id="fullName" name="fullName" required>
+                </div>
+            
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div id="alertPlaceholder"></div>
+                <button type="submit" class="btn btn-primary btn-block" id="signUpButton">
+                    <span id="signUpText">Login</span>
+                    <span id="signUpSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+    
+                <p class="font-weight-bold mt-2">If you don't have an account <a class="text-primary" href="/student/student-signup">Sign Up.</a></p>
+            </form>
+        </div>
+       
+    </main>
+    <footer class="text-center mt-5">
+        <p>Developed by  <strong>EKPOR JOHN NKANU.</strong> This app facilitates low-bandwidth, real-time virtual classroom sessions. © 2024.</p>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const signUpButton = document.getElementById('signUpButton');
+            const signUpText = document.getElementById('signUpText');
+            const signUpSpinner = document.getElementById('signUpSpinner');
+            
+            // Show spinner and hide text
+            signUpText.classList.add('d-none');
+            signUpSpinner.classList.remove('d-none');
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+
+            axios.post('/student/login', data)
+                .then(function (response) {
+                    if (response.data.success) {
+                        window.location.href = '/student/student-dashboard';
+                    } else {
+                        showAlert('Invalid credentials. Please try again.', 'danger');
+                        signUpText.classList.remove('d-none');
+            signUpSpinner.classList.add('d-none');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error:', error);
+                    showAlert('An error occurred. Please try again later.', 'danger');
+                    signUpText.classList.remove('d-none');
+            signUpSpinner.classList.add('d-none');
+                });
+        });
+
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `;
+            document.getElementById('alertPlaceholder').innerHTML = alertHtml;
+        }
+    </script>
+</body>
+</html>
