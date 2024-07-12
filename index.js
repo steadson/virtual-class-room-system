@@ -425,6 +425,22 @@ app.get('/virtual-class/:roomID', (req, res) => {
 
     res.render('join-virtual-class', { roomID, user });
 });
+
+// Logout route for both admin and student
+app.post('/api/logout', (req, res) => {
+    // Clear the session
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            return res.status(500).json({ success: false, message: 'Error logging out' });
+        }
+        
+        // Clear any cookies
+        res.clearCookie('connect.sid'); // Adjust cookie name if you're using a different one
+
+        // Send response
+        res.json({ success: true, message: 'Logged out successfully' });
+    });})
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
