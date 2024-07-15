@@ -6,9 +6,10 @@ const path = require('path');
 const bodyParser = require('body-parser')
 const app = express();
 const db = require('./model/db');
+const Admin = require('./model/admin.js')
 const Student = require('./model/Student.js'); // Adjust according to your model file structure
 const Course = require('./model/Course');
-
+const bcrypt = require("bcrypt")
 const server = http.createServer(app);
 const io = socketIo(server);
 const session = require('express-session');
@@ -38,9 +39,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.render('index');
 });
+app.get('/admin/login',async(req,res)=>{
+    res.render('admin-login')
+})
+app.post('/admin/login', async (req, res) => {
+   const {email, password} = req.body;
+   console.log(req.body)
+   try{
+    const admin = await Admin.findOne({email})
+    
+    // If no lecturer found with that email
+    if (!admin) {
+        console.log('match not found');
+        return res.status(401).json({ error: 'Invalid email or password' });
+  
+    }
+    console.log('found match')
+     // Compare the provided password with the stored hashed password
+     const isPasswordValid = await bcrypt.compare(password, admin.password);
 
-app.get('/admin', (req, res) => {
-    res.render('admin');
+     if (!isPasswordValid) {
+         return res.status(401).json({error: 'Invalid email or password' });
+     }
+     req.session.admin =admin;
+     res.json({success:true})
+   }catch(err){
+    console.log(err)
+    res.status(500).json({error:'Error logging'});
+   }
 });
 app.get('/student/login', (req, res)=>{
     res.render('student-login')
@@ -67,28 +93,32 @@ app.post('/student/login', async(req,res)=>{
         
     
 })
-app.get('/admin/login', (req, res) => {
-    res.render('admin-login');
+app.get('/lecturer/login', (req, res) => {
+    res.render('lecturer-login');
 });
-app.post('/admin/login', async (req, res) => {
-    const { fullName, courseNumber, password } = req.body;
-    console.log(fullName, courseNumber, password)
+app.post('/lecturer/login', async (req, res) => {
+    const { email, password } = req.body;
+    console.log(email, password)
     try {
-        const admin = await db.findOne({ fullName, courseNumber, password });
-        if (admin) {
-            req.session.admin = admin; // Store admin data in session
+        const lecturer = await db.findOne({ email});
+        if (lecturer) {
+            // Compare the provided password with the stored hashed password
+     const isPasswordValid =  bcrypt.compare(password, lecturer.password);
+
+     if (!isPasswordValid) {
+         return res.status(401).json({error: 'Invalid email or password' });
+     }
+            req.session.lecturer = lecturer; // Store admin data in session
             res.json({ success: true });
 
-            // res.redirect('/admin/dashboard');
-           
         } else {
-        
-            res.json({ success: false });
-           //res.status(401).send('Invalid credentials');
+            console.log('match not found');
+            return res.status(401).json({ error: 'Invalid email or password' });
+      
         }
     } catch (err) {
         console.log(err)
-        res.status(500).send('Error logging in');
+        res.status(500).send('Error logging');
     }
 });
 app.get('/student/student-signup', (req, res) => {
@@ -96,21 +126,19 @@ app.get('/student/student-signup', (req, res) => {
 });
 app.post('/student/student-signup', async (req, res) => {
     
-    const { fullName,faculty, department, degreeLevel, email, password, matricNumber } = req.body;
+    const { fullName, email, password, matricNumber, gender} = req.body;
    
     try {
         // Create a new admin object with the submitted data
         const student = new Student({
             fullName,
          matricNumber,
-            faculty,
-            department,
-            degreeLevel,
+            gender,
             email,
             password
         });
-        console.log( fullName, faculty, department, degreeLevel, email, password )
-        // Save the admin data to MongoDB
+        console.log( fullName, matricNumber,gender, email, password )
+        // Save the student data to MongoDB
         await student.save();
 
         // Redirect to login page after successful sign-up
@@ -121,33 +149,69 @@ app.post('/student/student-signup', async (req, res) => {
     }
 });
 // Route to render the admin sign-up form
-app.get('/admin/admin-signup', (req, res) => {
-    res.render('admin-signup');
+app.get('/lecturer/lecturer-signup', (req, res) => {
+    res.render('lecturer-signup');
+});
+app.post('/lecturer/lecturer-signup', async (req, res) => {
+    try {
+        const {
+            fullName,
+            sex,
+            email,
+            password
+        } = req.body;
+
+        // Check if the email is already in use
+        const existingLecturer = await db.findOne({ email });
+        if (existingLecturer) {
+            return res.status(400).json({ error: 'Email is already in use' });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create a new lecturer
+        const newLecturer = new db({
+            fullName,
+            sex,
+            email,
+            password: hashedPassword
+        });
+
+        // Save the new lecturer to the database
+        await newLecturer.save();
+//res.redirect('lecturer/login')
+        res.status(201).json({ success: 'Lecturer account created successfully' });
+    } catch (error) {
+        console.error('Error during lecturer signup:', error);
+        res.status(500).json({ error: 'An error occurred during signup' });
+    }
 });
 
 // Route to handle the admin sign-up form submission
 app.post('/admin/admin-signup', async (req, res) => {
     
-    const { fullName, sex, faculty, department, courseTitle, courseNumber, courseUnit, degreeLevel, email, password } = req.body;
+    const { fullName, sex,email, password } = req.body;
+    // Check if the email is already in use
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+        return res.status(400).json({ error: 'Email is already in use' });
+    }
    
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
     try {
         // Create a new admin object with the submitted data
-        const admin = new db({
+        const admin = new Admin({
             fullName,
             sex,
-            faculty,
-            department,
-            courseTitle,
-            courseNumber,
-            courseUnit,
-            degreeLevel,
             email,
-            password
+            password:hashedPassword
         });
-        console.log( fullName, sex, faculty, department, courseTitle, courseNumber, courseUnit, degreeLevel, email, password )
+        console.log( fullName, sex, email, password )
         // Save the admin data to MongoDB
         await admin.save();
-
+console.log('admin safe')
         // Redirect to login page after successful sign-up
         res.redirect('/admin/login');
     } catch (err) {
@@ -155,6 +219,9 @@ app.post('/admin/admin-signup', async (req, res) => {
         res.status(500).send('Error signing up admin');
     }
 });
+app.get('/admin/admin-signup', (req,res)=>{
+    res.render('admin-signup');
+})
 app.get('/student/student-dashboard', (req, res)=>{
     console.log('Session data:', req.session);
     if (req.session && req.session.student) {
@@ -162,7 +229,7 @@ app.get('/student/student-dashboard', (req, res)=>{
         res.render('student-dashboard', { student: req.session.student });
     } else {
         console.log('Admin not authenticated, redirecting to login');
-        res.redirect('/admin/login');
+        res.redirect('/student/login');
     }
 })
 app.get('/api/refresh-virtual-classes', async (req, res) => {
@@ -182,11 +249,11 @@ console.log('virtualClasses', student.viirtualClasses)
         res.status(500).json({ success: false, message: 'Error refreshing virtual classes' });
     }
 });
-app.get('/admin/virtual-class', (req, res) => {
-    if (req.session && req.session.admin) {
-        res.render('virtual-class', { admin: req.session.admin });
+app.get('/lecturer/virtual-class', (req, res) => {
+    if (req.session && req.session.lecturer) {
+        res.render('virtual-class', { lecturer: req.session.lecturer });
     } else {
-        res.redirect('/admin/login');
+        res.redirect('/lecturer/login');
     }
 });
 app.get('/admin/admin-dashboard', (req, res) => {
@@ -199,27 +266,13 @@ app.get('/admin/admin-dashboard', (req, res) => {
         res.redirect('/admin/login');
     }
 });
-
-app.get('/api/courses/:course/students', async (req, res) => {
-    const { course } = req.params;
-console.log("geting", req.params)
-    try {
-        const courseDoc = await Course.findOne({course:course}).populate('students');
-        const courseDoc2 = await Course.findOne({course:course})
-        const department = courseDoc2.department
-        console.log(department)
-        if (!courseDoc) {
-            console.log('error loading registered courses')
-            return res.status(404).json({ error: 'Course not found' });
-        }
-        console.log('loading registered student',courseDoc.students)
-        res.json({students:courseDoc.students, department:department});
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error fetching registered students' });
+app.get('/lecturer/lecturer-dashboard', (req, res)=>{
+    if(req.session && req.session.lecturer){
+        console.log('lecturer authenticated, rendering dashboard');
+        res.render('lecturer-dashboard', { lecturer: req.session.lecturer });
+   
     }
-});
-
+})
 
 app.get('/api/courses/:course/students2', async (req, res) => {
     const { course } = req.params;
@@ -254,41 +307,139 @@ app.get('/api/students', async (req, res) => {
         res.status(500).send('Error fetching students');
     }
 });
-app.post('/api/register-student-to-course', async (req, res) => {
-    console.log('Received registration request:', req.body);
-    const { student, department, course } = req.body;
+app.get('/api/lecturers', async (req, res) => {
     try {
-        const studentData = await Student.findById(student);
-        if (!studentData) {
-            return res.json({ success: false, message: 'Student not found' });
-        }
-
-        const courseData = await Course.findOne({course: { $regex: new RegExp('^' + course + '$', 'i') }, department });
-        if (courseData) {
-            courseData.students.push({
-                name: studentData.fullName,
-                matricNumber: studentData.matricNumber
-            });
-            await courseData.save();
-        } else {
-            const newCourse = new Course({
-                course,
-                department,
-                students: [{
-                    name: studentData.fullName,
-                    matricNumber: studentData.matricNumber
-                }]
-            });
-            await newCourse.save();
-        }
-
-        res.json({ success: true });
+        const lecturers = await db.find();
+        console.log('lecturer',lecturers)
+        res.json({lecturers:lecturers});
     } catch (err) {
-        console.log(err);
-        res.status(500).send('Error registering student to course');
+        res.status(500).send('Error fetching lecturer');
     }
 });
 
+
+app.post('/api/register-student', async (req, res) => {
+    const { studentId, faculty, department, degreeLevel, courses } = req.body;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        // Update Student
+        const student = await Student.findByIdAndUpdate(
+            studentId,
+            { 
+                faculty, 
+                department, 
+                degreeLevel, 
+                $addToSet: { courses: { $each: courses } }
+            },
+            { new: true, session }
+        );
+
+        if (!student) {
+            throw new Error('Student not found');
+        }
+
+        // Update Courses
+        for (const course of courses) {
+            await Course.findOneAndUpdate(
+                { courses: course, department: student.department },
+                { 
+                    $addToSet: { 
+                        students: { 
+                            name: student.fullName, 
+                            matricNumber: student.matricNumber 
+                        } 
+                    },
+                    faculty: student.faculty,
+                    department: student.department
+                },
+                { upsert: true, session }
+            );
+        }
+
+        await session.commitTransaction();
+        res.json({ success: true, message: 'Student registered successfully' });
+    } catch (error) {
+        await session.abortTransaction();
+        console.error('Registration error:', error);
+        res.status(500).json({ success: false, message: 'Error registering student' });
+    } finally {
+        session.endSession();
+    }
+});
+
+app.post('/api/assign-course-to-lecturer', async(req, res)=>{
+    console.log('Received lecturer info', req.body);
+    const { name2, faculty2, department2, degreeLevel2, course2, courseCode2 } = req.body;
+    try {
+        const Lectuerer= await db.findOne({ fullName: name2});
+        if (!Lectuerer) {
+            return res.status(404).json({ success: false, message: 'lecturer not found' });
+        }
+            const courseData = await Course.findOne({
+                courses: course2, department:department2
+            })
+
+            if (courseData) {
+                 // Update existing course
+                 courseData.lecturer = name2
+                 courseData.faculty =faculty2
+                 courseData.courseCode = courseCode2
+                // courseData.courses = course2
+            }  else {
+                const newCourse = new Course({
+                    
+                    courses:course2,
+                    department:department2,
+                    lecturer:name2,
+                    faculty:faculty2,
+                    courseCode:courseCode2 
+                });
+                await newCourse.save();
+            }
+            res.json({ success: true, message: 'lecturer assigning successfully' });
+        }
+     catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Error assigning lecturer' });
+    }
+})
+app.get('/api/getFullLecturerDetails', async(req,res)=>{
+    const {id} = req.query
+    console.log(req.query)
+    try{
+        const lecturer = await db.findOne({_id:id})
+        if(!lecturer){
+            return res.status(404).json({error:'lecturer not found'})
+        }
+        console.log(lecturer)
+        const {fullName, sex, email}= lecturer
+        const personalInfo ={name:fullName, sex:sex, email:email}
+        const Courses = await Course.find({lecturer:fullName})
+        const courseList = []
+        if(Courses){
+            console.log(Courses)
+            Courses.forEach(course => {
+                // Ensure courseCode and other fields are defined or assign a default value
+                const courseCode = course.courseCode || 'null';
+                const department = course.department || 'null';
+                const faculty = course.faculty || 'null';
+                const students =course.students.length || '0'
+                const coursez = course.courses || 'null'
+                courseList.push({
+                    coursez, courseCode, department, faculty, students
+                })
+               
+            });
+        }
+        return res.status(200).json({list:courseList, personalInfo:personalInfo})
+    }catch(err){
+        console.log('error occured', err)
+        return res.status(400).json({eror:'an error occured'})
+    }
+})
 
 app.post('/api/remove-student-from-course', async (req, res) => {
     const { matricNumber, course } = req.body;
@@ -335,25 +486,26 @@ app.get('/virtual-class', (req, res) => {
     res.render('virtual-class', { user });
 });
 app.post('/api/send-link-to-students', async (req, res) => {
-    const { classLink, startTime, courseTitle } = req.body;
+    const { classLink, startTime, courseId, courseTitle } = req.body;
     
-    if (!req.session || !req.session.admin) {
+    if (!req.session || !req.session.lecturer) {
         return res.status(401).json({ success: false, message: 'Not authenticated' });
     }
 
     try {
-        const courseDoc = await Course.findOne({ course: courseTitle });
+        // Find students enrolled in the specific course
+        const students = await Student.find({ courses: courseTitle });
 
-        if (!courseDoc) {
-            return res.status(404).json({ success: false, message: 'Course not found' });
+        if (students.length === 0) {
+            return res.status(404).json({ success: false, message: 'No students found for this course' });
         }
 
         const startDateTime = new Date(startTime);
 
         // Update each student's document with the new virtual class information
-        const updatePromises = courseDoc.students.map(async (student) => {
-            return Student.findOneAndUpdate(
-                { matricNumber: student.matricNumber },
+        const updatePromises = students.map(async (student) => {
+            return Student.findByIdAndUpdate(
+                student._id,
                 {
                     $push: {
                         virtualClasses: {
@@ -369,7 +521,7 @@ app.post('/api/send-link-to-students', async (req, res) => {
 
         await Promise.all(updatePromises);
 
-        res.json({ success: true, message: 'Virtual class link sent to all enrolled students' });
+        res.json({ success: true, message: `Virtual class link sent to ${students.length} enrolled students` });
     } catch (err) {
         console.error('Error in /api/send-link-to-students:', err);
         res.status(500).json({ success: false, message: 'Error sending link to students' });
@@ -441,6 +593,134 @@ app.post('/api/logout', (req, res) => {
         // Send response
         res.json({ success: true, message: 'Logged out successfully' });
     });})
+    app.delete('/api/deleteLecturer/:id', async (req, res) => {
+        const lecturerId = req.params.id;
+    
+        try {
+            // Find the lecturer
+            const lecturer = await db.findById(lecturerId);
+            if (!lecturer) {
+                return res.status(404).json({ success: false, message: 'Lecturer not found' });
+            }
+    
+            // Remove lecturer from all associated courses
+            await Course.updateMany(
+                { lecturer: lecturer.fullName },
+                { $unset: { lecturer: "" } }
+            );
+    
+            // Delete the lecturer
+            await db.findByIdAndDelete(lecturerId);
+    
+            res.json({ success: true, message: 'Lecturer deleted successfully and removed from associated courses' });
+        } catch (error) {
+            console.error('Error deleting lecturer:', error);
+            res.status(500).json({ success: false, message: 'Error deleting lecturer' });
+        }
+    });
+
+    app.get('/api/getFullStudentDetails', async (req, res) => {
+        const { id } = req.query;
+        try {
+            const student = await Student.findById(id);
+            if (!student) {
+                return res.status(404).json({ error: 'Student not found' });
+            }
+    
+            const { fullName, email, gender, faculty, department, degreeLevel, matricNumber } = student;
+            const personalInfo = { fullName, email, gender, faculty, department, degreeLevel, matricNumber };
+    
+            const courses = await Course.find({ 'students.matricNumber': matricNumber });
+            const courseList = courses.map(course => ({
+                courseName: course.courses,
+                courseCode: course.courseCode,
+                department: course.department,
+                faculty: course.faculty
+            }));
+    
+            return res.status(200).json({ personalInfo, courseList, virtualClasses: student.virtualClasses });
+        } catch (err) {
+            console.log('Error occurred', err);
+            return res.status(500).json({ error: 'An error occurred' });
+        }
+    });
+    app.delete('/api/deleteStudent/:id', async (req, res) => {
+        const studentId = req.params.id;
+    
+        try {
+            // Find the student
+            const student = await Student.findById(studentId);
+            if (!student) {
+                return res.status(404).json({ success: false, message: 'Student not found' });
+            }
+    
+            // Remove student from all associated courses
+            await Course.updateMany(
+                { 'students.matricNumber': student.matricNumber },
+                { $pull: { students: { matricNumber: student.matricNumber } } }
+            );
+    
+            // Delete the student
+            await Student.findByIdAndDelete(studentId);
+    
+            res.json({ success: true, message: 'Student deleted successfully and removed from associated courses' });
+        } catch (error) {
+            console.error('Error deleting student:', error);
+            res.status(500).json({ success: false, message: 'Error deleting student' });
+        }
+    });
+
+// GET /api/courses
+app.get('/api/courses', async (req, res) => {
+    try {
+        console.log(req.session)
+        // Assuming the logged-in lecturer's information is available in req.user
+        const courses = await Course.find({ lecturer: req.session.lecturer.fullName });
+        res.json({ courses });
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        res.status(500).json({ message: 'Error fetching courses' });
+    }
+});
+
+// GET /api/courses/:courseId/students
+app.get('/api/courses/:courseId/students', async (req, res) => {
+    try {
+        const course = await Course.findById(req.params.courseId);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Fetch full student details
+        const studentDetails = await Student.find({ 
+            'courses': course.courses // Assuming 'courses' in Student schema is an array of course names
+        }).select('fullName matricNumber department');
+
+        res.json({ 
+            students: studentDetails.map(student => ({
+                name: student.fullName,
+                matricNumber: student.matricNumber,
+                department: student.department
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ message: 'Error fetching students' });
+    }
+});
+app.get('/api/lecturer-courses', async (req, res) => {
+    if (!req.session || !req.session.lecturer) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    try {
+        const courses = await Course.find({ lecturer: req.session.lecturer.fullName });
+        res.json({ success: true, courses });
+    } catch (err) {
+        console.error('Error fetching lecturer courses:', err);
+        res.status(500).json({ success: false, message: 'Error fetching courses' });
+    }
+});
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

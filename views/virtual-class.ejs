@@ -88,11 +88,19 @@
             <input type="datetime-local" id="startTime" class="datetime-input">
             
             <div class="d-grid gap-2 ">
+
                 <button  onclick="copyLink()" class="btn btn-primary" type="button">Copy Link</button>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="courseSelect">Course</label>
+                    <select class="form-select" id="courseSelect">
+                      <option selected>Choose a course...</option>
+                      <!-- Options will be populated dynamically -->
+                    </select>
+                  </div>
                 <button onclick="sendLinkToStudents()" class="btn btn-primary" type="button">Send Link to Students</button>
               </div>
             <button type="button" class="btn btn-secondary " style="margin-top: 4rem;"><a
-                    href="/admin/admin-dashboard" class="text-light" style="text-decoration:none;">Back To DashBoard</a></button>
+                    href="/lecturer/lecturer-dashboard" class="text-light" style="text-decoration:none;">Back To DashBoard</a></button>
         </div>
     </div>
 
@@ -100,8 +108,8 @@
     <script>
         // Assuming you're passing these variables from your server-side code
         // Using admin data from session
-        const courseName = "<%= admin.courseTitle %>";
-        const lecturerName = "<%= admin.fullName %>";
+        const courseName = "<%= lecturer.courseTitle %>";
+        const lecturerName = "<%= lecturer.fullName %>";
         const roomID = courseName + "_" + Date.now(); // Generate a unique room ID
         const userID = Math.floor(Math.random() * 10000) + "";
         const userName = lecturerName;
@@ -144,10 +152,18 @@
         function sendLinkToStudents() {
             const classLink = document.getElementById('classLink').value; // Use the value from the input field
             const startTime = document.getElementById('startTime').value;
+            const courseSelect = document.getElementById('courseSelect');
+    const selectedCourseId = courseSelect.value;
+    const selectedCourseName = courseSelect.options[courseSelect.selectedIndex].text;
+           
             if (!startTime) {
                 alert('Please set a start time for the class.');
                 return;
             }
+            if (selectedCourseId === 'Choose a course...') {
+        alert('Please select a course.');
+        return;
+    }
 
             fetch('/api/send-link-to-students', {
                 method: 'POST',
@@ -157,7 +173,8 @@
                 body: JSON.stringify({
                     classLink: classLink,
                     startTime: startTime,
-                    courseTitle: courseName
+                    courseId: selectedCourseId,
+            courseTitle: selectedCourseName
                 }),
             })
                 .then(response => response.json())
@@ -173,6 +190,24 @@
                     alert('An error occurred while sending the link.');
                 });
         }
+        function fetchCourses() {
+    fetch('/api/lecturer-courses')
+        .then(response => response.json())
+        .then(data => {
+            const courseSelect = document.getElementById('courseSelect');
+            courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+            data.courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = course.courses;
+                courseSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error fetching courses:', error));
+}
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', fetchCourses);
     </script>
 </body>
 

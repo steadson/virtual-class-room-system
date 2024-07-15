@@ -1,66 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
-           footer {
-    background-color: #131f2b;
-    padding: 10px;
-    text-align: center;
-    width: 100%;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
-}
+        #noStudent,
+        #noLecturer {
+            position: absolute;
+            top: 45%;
+            left: 45%;
+            color: gray;
+        }
+
+        footer {
+            background-color: #131f2b;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .special:hover {
+            color: #3483d1;
+        }
+
         .sidebar {
             height: 100vh;
             background-color: #131f2b;
         }
-        body{
+
+        body {
             box-sizing: border-box;
             margin: 0;
         }
     </style>
 </head>
+
 <body>
+    <div class="modal fade" id="studentDetailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentDetailsModalTitle">Student Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="studentDetails">
+                        <!-- Data will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Lecturer Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="lecturerDetails">
+                        <!-- Data will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container-fluid">
+
         <div class="row">
             <!-- Sidebar -->
             <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse" style="padding:0px; margin:0px">
                 <div class="position-sticky ">
-                    <div class="d-flex justify-content-between align-items-center mb-4" style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; padding-top: .3rem; ">
+                    <div class="d-flex justify-content-between align-items-center mb-4"
+                        style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; padding-top: .3rem; ">
                         <img src="/images/unical-logo.png" alt="School Logo" class="img-fluid" style="max-width:4rem;">
                         <small class="text-white bold ms-3" style="padding-right: -2rem;">UNIVERSITY OF CALABAR</small>
-                      </div>
+                    </div>
                     <ul class="nav flex-column">
-                        <li class="nav-item d-flex justify-content-between  box-shadow" style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
+                        <li class="nav-item d-flex justify-content-between  box-shadow special"
+                            style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
                             <a class="nav-link active text-white" href="#" id="studentListLink">
                                 <i class="fas fa-users me-2"></i>
-                               All Student
+                                All Student
                             </a>
                         </li>
-                        
-                        <li class="nav-item  d-flex justify-content-between" style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
-                            <a class="nav-link text-white d-flex justify-content-between" href="#" id="addStudentLink" >
+                        <li class="nav-item d-flex justify-content-between  box-shadow special"
+                            style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
+                            <a class="nav-link active text-white" href="#" id="lecturerListLink">
+                                <i class="fas fa-users me-2"></i>
+                                All Lecturer
+                            </a>
+                        </li>
+
+                        <li class="nav-item  d-flex justify-content-between special"
+                            style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
+                            <a class="nav-link text-white d-flex justify-content-between" href="#" id="addStudentLink">
                                 <span><i class="fas fa-user-plus me-2"></i></span>
-                               <span>Register student to course</span> 
+                                <span>Register a Student</span>
                             </a>
                         </li>
-                        <li class="nav-item  d-flex justify-content-between" style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
-                            <a class="nav-link text-white d-flex justify-content-between" href="#" id="viewRegisteredStudentsLink" >
+                        <li class="nav-item  d-flex justify-content-between special"
+                            style="border-bottom: .5px solid rgb(155, 149, 149); padding-bottom: 1rem; ">
+                            <a class="nav-link text-white d-flex justify-content-between" href="#" id="addLecturerLink">
                                 <span><i class="fa-solid fa-table-list"></i></i></span>
-                               <span style="padding-left:5px ;">Registered student </span> 
+                                <span style="padding-left:5px ;">Assign courses to lecturer </span>
                             </a>
                         </li>
-                        <li class="nav-item  d-flex" style=" padding-bottom: 1rem; margin-top: 2rem; justify-content: center; ">
-                          
-                                <button class="btn btn-secondary" type="button" onclick="logout()">Logout</button>
-                               
-                
+                        <li class="nav-item  d-flex"
+                            style=" padding-bottom: 1rem; margin-top: 2rem; justify-content: center; ">
+
+                            <button class="btn btn-secondary" type="button" onclick="logout()">Logout</button>
+
+
                         </li>
                     </ul>
                 </div>
@@ -68,63 +135,45 @@
 
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+                <h4 style="text-align:center; font-weight: bold; font-family: Helvetica, sans-serif; color: #131f2b;">
+                    Admin Block</h4>
                 <div id="alertPlaceholder"></div>
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Welcome, <span id="adminName"></span></h1>
                 </div>
-                <div id="viewRegisteredStudentsSection" class="d-none">
-                    <h3>List of Registered Students</h3>
-                    <div class ="virtualClassDiv" style="margin-top:14%; margin-bottom: 5%;">
-                        <div class="d-grid gap-2 col-6 mx-auto">
-                            <button class="btn btn-primary" type="button" onclick="startVirtualClass()">Start Virtual Class</button>
-                        </div>
-                    </div>
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Matric Number</th>
-                                <th>Department</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="registeredStudentListBody">
-                            <!-- Student list will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Student List Section -->
-                <div id="studentListSection" class="d-none">
-                    <h2>Student List</h2>
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>matricNumber</th>
-                                <th>department</th>
-                                <th>email</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentListBody">
-                            <!-- Student list will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
 
-                <!-- Add Student Section -->
-                <div id="addStudentSection" class="d-none">
-                    <h2>Student Registration</h2>
-                    <form id="registerStudentForm">
+                <div id="addLecturerSection" class="d-none">
+                    <div id="alertPlaceholder2"></div>
+                    <h3>Assign courses to Lecturer</h3>
+                    <form id="registerLecturerForm">
+                        <label for="lecturer" class="form-label">Select lecturer</label>
+                        <select class="form-select" id="lecturer" name="lecturer" required>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                        <!-- select faculty -->
                         <div class="mb-3">
-                            <label for="studentSelect" class="form-label">Select Student</label>
-                            <select class="form-select" id="studentSelect" name="student" required>
-                                <!-- Options will be populated dynamically -->
+                            <label for="faculty" class="form-label">Faculty</label>
+                            <select class="form-select" id="faculty2" name="faculty" required>
+                                <option value="">Select Faculty</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="science">Science</option>
+                                <option value="medicine">Medicine</option>
+                                <option value="arts">Arts</option>
+                                <option value="business">Business</option>
+                                <option value="law">Law</option>
+                                <option value="education">Education</option>
+                                <option value="agriculture">Agriculture</option>
+                                <option value="social_sciences">Social Sciences</option>
+                                <option value="environmental_studies">Environmental Studies</option>
                             </select>
                         </div>
+                        <!-- select Department -->
                         <div class="form-group">
-                            <label for="department">Select Department</label>
-                            <select class="form-control" id="department" name="department" required>
+                            <label for="department2">Select Department</label>
+                            <select class="form-control" id="department2" name="department2" required>
+                                <option value="">select Department</option>
                                 <option value="computer_science">Computer Science</option>
                                 <option value="mathematics">Mathematics</option>
                                 <option value="physics">Physics</option>
@@ -135,163 +184,430 @@
                                 <option value="biochemistry">Biochemistry</option>
                                 <option value="microbiology">Microbiology</option>
                                 <option value="environmental_science">Environmental Science</option>
+                                <option value="electrical_engineering">Electrical Engineering</option>
+                                <option value="mechanical_engineering">Mechanical Engineering</option>
+                                <option value="civil_engineering">Civil Engineering</option>
+                                <option value="chemical_engineering">Chemical Engineering</option>
+                                <option value="biomedical_engineering">Biomedical Engineering</option>
+                                <option value="aerospace_engineering">Aerospace Engineering</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="course">Select Course</label>
-                            <select class="form-control" id="course" name="course" required>
-                                <option value="mobile_adaptive_technologies">Mobile/Adaptive Technologies</option>
-                                <!-- <option value="operating_system">Operating System</option>
-                                <option value="advance_database_systems">Advance Database Systems</option>
-                                <option value="programming_languages">Programming Languages</option>
-                                <option value="advance_computer_algorithms">Advance Computer Algorithms</option>
-                                <option value="object_oriented_programming">Object Oriented Programming</option>
-                           -->
-                            </select> 
+
+                        <!--pick course-->
+                        <div class="mb-3">
+                            <label for="course2" class="form-label">pick course</label>
+                            <select class="form-select" id="course2" required>
+                                <option value="">Select Course</option>
+                                <option value="Mobile/Adaptive Technologies">Mobile/Adaptive Technologies</option>
+                                <option value="Operating System">Operating System</option>
+                                <option value="Advance Database Systems">Advance Database Systems</option>
+                                <option value="Programming Languages">Programming Languages</option>
+                                <option value="Object Oriented Programming">Object Oriented Programming</option>
+                                <option value="Advance Computer Algorithms">Advance Computer Algorithms</option>
+                            </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Register Student</button>
+                        <!--select Degree-->
+                        <div class="mb-3">
+                            <label for="degree_level2" class="form-label">Degree Level</label>
+                            <select class="form-select" id="degree_level2" required>
+                                <option value="">Select Degree Level</option>
+                                <option value="bachelor">Bachelor's</option>
+                                <option value="master">Master's</option>
+                                <option value="doctorate">Doctorate</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" style="width: 40%;">
+                            <input class="form-control" type="text" placeholder="Course code" id="courseCode2"
+                                aria-label="default input example">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span id="signUpTextRegister2">Assign Course</span>
+                            <span id="signUpSpinnerRegister2" class="spinner-border spinner-border-sm d-none"
+                                role="status" aria-hidden="true"></span>
+
+                        </button>
                     </form>
-                   
-                    <div id="studentListSection2" >
-                        <h3 class="mt-4">Students Registered</h3>
-                        <div class ="virtualClassDiv">
-                            <div class="d-grid gap-2 col-6 mx-auto">
-                                
-                              </div>
-                        </div>
-                        <table class="table table-striped" >
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>matricNumber</th>
-                                    <th>department</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="studentListBody2" id="studentList2">
-                                <!-- Student list will be populated here -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <!-- Modal -->
+
                 </div>
-            </main>
-            <footer class="text-center">
-                <p>Developed by  <strong>EKPOR JOHN NKANU.</strong> This app facilitates low-bandwidth, real-time virtual classroom sessions. © 2024.</p>
-            </footer>
+
+                <!-- Student List Section -->
+                <div id="studentListSection" class="d-none">
+                    <h2>Student List</h2>
+                    <h3 class="d-none" id="noStudent">No Student to display</h3>
+                    <table class="table table-striped" id="theTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>matricNumber</th>
+                                <th>email</th>
+                                <th>gender</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentListBody">
+                            <!-- Student list will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Lecturer List Section-->
+                <div id="lecturerListSection" class="d-none">
+                    <h2>Lecturers List</h2>
+                    <h3 class="d-none" id="noLecturer">No Lecturers to display</h3>
+                    <table class="table table-striped" id="theLecturerTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+
+                                <th>gender</th>
+                                <th>email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lecturerListBody">
+                            <!-- Lecturer list will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Add Student Section -->
+                <div id="addStudentSection" class="d-none">
+                    <h2>Student Registration</h2>
+                    <form id="registerStudentForm">
+                        <div class="mb-3">
+                            <label for="studentSelect" class="form-label">Select Student</label>
+                            <select class="form-select" id="studentSelect" name="student" required>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <!-- select faculty -->
+                        <div class="mb-3">
+                            <label for="faculty" class="form-label">Faculty</label>
+                            <select class="form-select" id="faculty" name="faculty" required>
+                                <option value="">Select Faculty</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="science">Science</option>
+                                <option value="medicine">Medicine</option>
+                                <option value="arts">Arts</option>
+                                <option value="business">Business</option>
+                                <option value="law">Law</option>
+                                <option value="education">Education</option>
+                                <option value="agriculture">Agriculture</option>
+                                <option value="social_sciences">Social Sciences</option>
+                                <option value="environmental_studies">Environmental Studies</option>
+                            </select>
+                        </div>
+                        <!-- select Department -->
+                        <div class="form-group">
+                            <label for="department">Select Department</label>
+                            <select class="form-control" id="department" name="department" required>
+                                <option value="">select Department</option>
+                                <option value="computer_science">Computer Science</option>
+                                <option value="mathematics">Mathematics</option>
+                                <option value="physics">Physics</option>
+                                <option value="chemistry">Chemistry</option>
+                                <option value="biology">Biology</option>
+                                <option value="geology">Geology</option>
+                                <option value="statistics">Statistics</option>
+                                <option value="biochemistry">Biochemistry</option>
+                                <option value="microbiology">Microbiology</option>
+                                <option value="environmental_science">Environmental Science</option>
+                                <option value="electrical_engineering">Electrical Engineering</option>
+                                <option value="mechanical_engineering">Mechanical Engineering</option>
+                                <option value="civil_engineering">Civil Engineering</option>
+                                <option value="chemical_engineering">Chemical Engineering</option>
+                                <option value="biomedical_engineering">Biomedical Engineering</option>
+                                <option value="aerospace_engineering">Aerospace Engineering</option>
+                            </select>
+                        </div>
+                        <!--select Degree-->
+                        <div class="mb-3">
+                            <label for="degree_level" class="form-label">Degree Level</label>
+                            <select class="form-select" id="degree_level" required>
+                                <option value="">Select Degree Level</option>
+                                <option value="bachelor">Bachelor's</option>
+                                <option value="master">Master's</option>
+                                <option value="doctorate">Doctorate</option>
+                            </select>
+                        </div>
+                        <!-- pick course-->
+                        <div class="mb-3">
+                            <label class="form-label">Pick Courses</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Mobile/Adaptive Technologies"
+                                    id="Mobile/Adaptive Technologies">
+                                <label class="form-check-label" for="Mobile/Adaptive Technologies">Mobile/Adaptive
+                                    Technologies</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Operating System"
+                                    id="Operating System">
+                                <label class="form-check-label" for="Operating System">Operating System</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Advance Database Systems"
+                                    id="Advance Database Systems">
+                                <label class="form-check-label" for="Advance Database Systems">Advance Database
+                                    Systems</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Programming Languages"
+                                    id="Programming Languages">
+                                <label class="form-check-label" for="Programming Languages">Programming
+                                    Languages</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Object Oriented Programming"
+                                    id="Object Oriented Programming">
+                                <label class="form-check-label" for="Object Oriented Programming">Object Oriented
+                                    Programming</label>
+                            </div></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="Advance Computer Algorithms"
+                                id="Advance Computer Algorithms">
+                            <label class="form-check-label" for="Advance Computer Algorithms">Advance Computer
+                                Algorithms</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span id="signUpTextRegister">Register Student</span>
+                            <span id="signUpSpinnerRegister" class="spinner-border spinner-border-sm d-none" role="status"
+                                aria-hidden="true"></span>
+        
+                        </button>
+                    </form>
+                </div>
+               
+                
+
+                <div id="studentListSection2">
+                    <h3 class="mt-4">Students Registered</h3>
+                    <div class="virtualClassDiv">
+                        <div class="d-grid gap-2 col-6 mx-auto">
+
+                        </div>
+                    </div>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>matricNumber</th>
+                                <th>department</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentListBody2" id="studentList2">
+                            <!-- Student list will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
         </div>
+        </main>
+        <footer class="text-center">
+            <p>Developed by <strong>EKPOR JOHN NKANU.</strong> This app facilitates low-bandwidth, real-time virtual classroom sessions. © 2024.</p>
+        </footer>
+    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        const noStudent = document.getElementById('noStudent')
+        const theTable = document.getElementById('theTable')
+        const noLecturer = document.getElementById('noLecturer')
+        const theLecturerTable = document.getElementById('theLecturerTable')
+
         async function logout() {
-    try {
-        const response = await fetch('/api/logout', { method: 'POST' });
-        const data = await response.json();
-        if (data.success) {
-            // Redirect to login page or home page
-            window.location.href = '/admin/login';
-        } else {
-            console.error('Logout failed:', data.message);
+            try {
+                const response = await fetch('/api/logout', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    // Redirect to login page or home page
+                    window.location.href = '/admin/login';
+                } else {
+                    console.error('Logout failed:', data.message);
+                }
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
         }
-    } catch (error) {
-        console.error('Error during logout:', error);
-    }
-}
-        function startVirtualClass() {
-    window.location.href = '/admin/virtual-class';
-}
+      
         // Populate admin name
         document.getElementById('adminName').textContent = '<%= admin.fullName %>';
-    
+
         // Navigation functionality
-        document.getElementById('studentListLink').addEventListener('click', function(e) {
+        document.getElementById('studentListLink').addEventListener('click', function (e) {
             e.preventDefault();
             showSection('studentListSection');
+
             loadStudentList();
         });
-        document.getElementById('viewRegisteredStudentsLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    showSection('viewRegisteredStudentsSection');
-    loadRegisteredStudents2('mobile_adaptive_technologies');
-});
-        document.getElementById('addStudentLink').addEventListener('click', function(e) {
+        document.getElementById('lecturerListLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            showSection('lecturerListSection');
+            loadLecturerSelect();
+            loadLecturerList();
+        });
+        document.getElementById('addLecturerLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            showSection('addLecturerSection');
+            loadLecturerSelect();
+        });
+        document.getElementById('addStudentLink').addEventListener('click', function (e) {
             e.preventDefault();
             showSection('addStudentSection');
             loadStudentSelect();
         });
-    
+
         function showSection(sectionId) {
             document.querySelectorAll('main > div').forEach(div => div.classList.add('d-none'));
             document.getElementById(sectionId).classList.remove('d-none');
         }
-    
+
         function loadStudentList() {
             axios.get('/api/students')
-                .then(function(response) {
+                .then(function (response) {
                     console.log(response.data)
                     const studentListBody = document.getElementById('studentListBody');
                     studentListBody.innerHTML = '';
+                    if (response.data.students.length < 1) {
+                        noStudent.classList.remove('d-none')
+                        theTable.classList.add('d-none')
+
+                    }
                     response.data.students.forEach(student => {
                         const row = `
                             <tr>
                                 <td>${student.fullName}</td>
                                 <td>${student.matricNumber}</td>
-                                <td>${student.department}</td>
+                                <td>${student.gender}</td>
                                 <td>${student.email}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-primary" onclick="registerToCourse('${student._id}')">Register to Course</button>
+                                    <button class="btn btn-sm btn-primary" onclick="registerToCourse('${student._id}')">Register Student</button>
+                                     <button class="btn btn-sm btn-success" onclick="viewStudentDetails('${student._id}')">view</button>
+    
+                                        <button class="btn btn-sm btn-danger" onclick="deleteStudent('${student._id}')">Delete</button>
+                            </td>
+                            </td>
                                 </td>
                             </tr>
                         `;
                         studentListBody.innerHTML += row;
                     });
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     console.error('Error loading student list:', error);
                 });
         }
-    
+
+
+        //load lecturer
+        function loadLecturerList() {
+            axios.get('/api/lecturers')
+                .then(function (response) {
+                    console.log(response.data)
+                    const lecturerListBody = document.getElementById('lecturerListBody');
+                    lecturerListBody.innerHTML = '';
+                    if (response.data.lecturers.length < 1) {
+                        noLecturer.classList.remove('d-none')
+                        theLecturerTable.classList.add('d-none')
+                    } else {
+                        noLecturer.classList.add('d-none')
+                        theLecturerTable.classList.remove('d-none')
+                        response.data.lecturers.forEach(lecturer => {
+                            const row = `
+                        <tr>
+                            <td>${lecturer.fullName}</td>
+        
+                            <td>${lecturer.sex}</td>
+                            <td>${lecturer.email}</td>
+                            <td>
+                                
+                                <button type="button"  class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop" onclick="viewLecturer('${lecturer._id}')" >view</button>
+                                 <button class="btn btn-sm btn-danger" onclick="deleteLecturer('${lecturer._id}')">delete</button>
+                            </td>
+                        </tr>
+                    `;
+                            lecturerListBody.innerHTML += row;
+                        });
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error loading lecturer list:', error);
+                });
+        }
+        function loadLecturerSelect() {
+            axios.get('/api/lecturers')
+                .then(function (response) {
+                    console.log(response.data)
+                    const lecturerSelect = document.getElementById('lecturer');
+                    lecturerSelect.innerHTML = '<option value="">Select a lecturer</option>';
+                    if (response.data.lecturers && response.data.lecturers.length > 0) {
+                        response.data.lecturers.forEach(lecturer => {
+                            lecturerSelect.innerHTML += `<option value="${lecturer.fullName}">${lecturer.fullName}</option>`;
+                        });
+                    } else {
+                        console.log('No lecturers found');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error loading lecturer select:', error);
+                });
+        }
         function loadStudentSelect() {
             axios.get('/api/students')
-                .then(function(response) {
+                .then(function (response) {
                     console.log(response.data)
                     const studentSelect = document.getElementById('studentSelect');
                     studentSelect.innerHTML = '<option value="">Select a student</option>';
-                    response.data.students.forEach(student => {
-                        studentSelect.innerHTML += `<option value="${student._id}">${student.fullName}</option>`;
-                    });
+                    if (response.data.students && response.data.students.length > 0) {
+                        response.data.students.forEach(student => {
+                            studentSelect.innerHTML += `<option value="${student._id}">${student.fullName}</option>`;
+                        });
+                    } else {
+                        console.log('No students found');
+                    }
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     console.error('Error loading student select:', error);
                 });
         }
-    
-        document.getElementById('registerStudentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-    
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-            console.log('Submitting data:', data);
-            axios.post('/api/register-student-to-course', data)
-                .then(function(response) {
-                    if (response.data.success) {
-                        showAlert('Student registered to course successfully!', 'success');
-                        loadRegisteredStudents(data.course);
-                    
-                    } else {
-                        showAlert('Failed to register student to course.', 'danger');
-                    }
-                })
-                .catch(function(error) {
-                    console.error('Error:', error);
-                    showAlert('An error occurred. Please try again later.', 'danger');
-                });
-        });
-    
+        //assign course tp lecturer
+        document.getElementById('registerLecturerForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const signUpText2 = document.getElementById('signUpTextRegister');
+            const signUpSpinner2 = document.getElementById('signUpSpinnerRegister');
+            const name2 = document.getElementById('lecturer').value;
+            const faculty2 = document.getElementById('faculty2').value;
+            const department2 = document.getElementById('department2').value;
+            const degreeLevel2 = document.getElementById('degree_level2').value;
+            const courseCode2 = document.getElementById('courseCode2').value;
+            const course2 = document.getElementById('course2').value
+            console.log(name2, faculty2, degreeLevel2, degreeLevel2, courseCode2, course2)
+            // Show spinner and hide text
+            signUpText2.classList.add('d-none');
+            signUpSpinner2.classList.remove('d-none');
+            const courseCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            const courses = Array.from(courseCheckboxes).map(checkbox => checkbox.value);
+            const formData = {
+                name2, faculty2, department2, degreeLevel2, courseCode2, course2
+            }
+            try {
+                const response = await axios.post('/api/assign-course-to-lecturer', formData);
+                console.log('Registration successful:', response.data);
+                // Show spinner and hide text
+                signUpTextRegister.classList.remove('d-none');
+                signUpSpinnerRegister.classList.add('d-none');
+                showAlert('assigning course to lecturer successfully!', 'success');
+                // You can add more code here to handle the successful registration
+            } catch (error) {
+                console.error('assigninf course failed:', error);
+                showAlert('Failed to assign course to Lecturer.', 'danger');
+                // You can add more code here to handle the error
+            }
+        })
         function showAlert(message, type) {
-        const alertPlaceholder = document.getElementById('alertPlaceholder');
-        alertPlaceholder.innerHTML = `
+            const alertPlaceholder2 = document.getElementById('alertPlaceholder2');
+            alertPlaceholder2.innerHTML = `
             <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                 <strong>${message}</strong>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
@@ -299,90 +615,226 @@
                 </button>
             </div>
         `;
-        alertPlaceholder.classList.remove('d-none');
-    }
-    function loadRegisteredStudents(course) {
-        axios.get(`/api/courses/${course}/students`)
-            .then(function(response) {
-                console.log("ress",response.data.students)
-                const studentListBody2 = document.getElementById('studentListBody2');
-                studentListBody2.innerHTML = '';
-                const department = response.data.department
-                response.data.students.forEach(student => {
-                    const row =`
-                    <tr>
-                                <td>${student.name}</td>
-                                <td>${student.matricNumber}</td>
-                                <td>${department}</td>
+            alertPlaceholder2.classList.remove('d-none');
+        }
 
-                                <td>
-                                    <button class="btn btn-sm btn-primary" onclick="removeFromCourse('${student.matricNumber}', '${course}')">Remove from course</button>
-                                </td>
-                            </tr>
-                        `;
-                        studentListBody2.innerHTML += row
-                      
-                });
-               // showSection('courseStudentsSection');
-            })
-            .catch(function(error) {
-                console.error('Error loading registered students:', error);
-            });
-    }
-    function loadRegisteredStudents2(course) {
-        axios.get(`/api/courses/${course}/students2`)
-            .then(function(response) {
-                console.log("ress",response.data.students)
-                const studentListBody3 = document.getElementById('registeredStudentListBody');
-                studentListBody3.innerHTML = '';
-                const department = response.data.department
-                response.data.students.forEach(student => {
-                    const row =`
-                    <tr>
-                                <td>${student.name}</td>
-                                <td>${student.matricNumber}</td>
-                                <td>${department}</td>
 
-                                <td>
-                                    <button class="btn btn-sm btn-primary" onclick="removeFromCourse('${student.matricNumber}', '${course}')">Remove from course</button>
-                                </td>
-                            </tr>
-                        `;
-                        studentListBody3.innerHTML += row
-                      
+        // register a student
+        document.getElementById('registerStudentForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const signUpText = document.getElementById('signUpTextRegister');
+            const signUpSpinner = document.getElementById('signUpSpinnerRegister');
+
+            const studentId = document.getElementById('studentSelect').value;
+            const faculty = document.getElementById('faculty').value;
+            const department = document.getElementById('department').value;
+            const degreeLevel = document.getElementById('degree_level').value;
+            const courseCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            const courses = Array.from(courseCheckboxes).map(checkbox => checkbox.value);
+
+            signUpText.classList.add('d-none');
+            signUpSpinner.classList.remove('d-none');
+
+            const formData = {
+                studentId,
+                faculty,
+                department,
+                degreeLevel,
+                courses
+            };
+
+            try {
+                const response = await axios.post('/api/register-student', formData);
+                console.log('Registration successful:', response.data);
+                signUpText.classList.remove('d-none');
+                signUpSpinner.classList.add('d-none');
+                showAlert('Student registered successfully!', 'success');
+            } catch (error) {
+                console.error('Registration failed:', error);
+                signUpText.classList.remove('d-none');
+                signUpSpinner.classList.add('d-none');
+                showAlert('Failed to register student.', 'danger');
+            }
+        });
+        function showAlert(message, type) {
+            const alertPlaceholder = document.getElementById('alertPlaceholder');
+            alertPlaceholder.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <strong>${message}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `;
+            alertPlaceholder.classList.remove('d-none');
+        }
+
+
+        function removeFromCourse(matricNumber, course) {
+            axios.post('/api/remove-student-from-course', { matricNumber, course })
+                .then(function (response) {
+                    if (response.data.success) {
+                        showAlert('Student removed from course successfully!', 'success');
+                        loadRegisteredStudents(course);  // Refresh the list
+                        loadRegisteredStudents2(course)
+                    } else {
+                        showAlert('Failed to remove student from course.', 'danger');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error removing student from course:', error);
+                    showAlert('An error occurred. Please try again later.', 'danger');
                 });
-               // showSection('courseStudentsSection');
-            })
-            .catch(function(error) {
-                console.error('Error loading registered students:', error);
-            });
-    }
-    function removeFromCourse(matricNumber, course) {
-        axios.post('/api/remove-student-from-course', { matricNumber, course })
-            .then(function (response) {
-                if (response.data.success) {
-                    showAlert('Student removed from course successfully!', 'success');
-                    loadRegisteredStudents(course);  // Refresh the list
-                    loadRegisteredStudents2(course)
-                } else {
-                    showAlert('Failed to remove student from course.', 'danger');
-                }
-            })
-            .catch(function (error) {
-                console.error('Error removing student from course:', error);
-                showAlert('An error occurred. Please try again later.', 'danger');
-            });
-    }
+        }
+        function deleteLecturer(id) {
+            if (confirm("Are you sure you want to delete this lecturer?")) {
+                axios.delete(`/api/deleteLecturer/${id}`)
+                    .then(function (response) {
+                        if (response.data.success) {
+                            alert('Lecturer deleted successfully!', 'success');
+                            loadLecturerList();  // Refresh the lecturer list
+                        } else {
+                            alert('Failed to delete lecturer.');
+                        }
+                    })
+                    .catch(function (error) {
+                        console.error('Error deleting lecturer:', error);
+                        alert('An error occurred while deleting the lecturer. Please try again later.');
+                    });
+            }
+        }
+        function viewStudentDetails(id) {
+            axi
+        }
+        function viewLecturer(id) {
+            axios.get(`/api/getFullLecturerDetails?id=${id}`)
+                .then((response) => {
+                    const { list, personalInfo } = response.data;
+                    console.log(response.data)
+
+                    // Update modal title
+                    document.getElementById('modalTitle').textContent = `${personalInfo.name} Details`;
+
+                    // Construct HTML for lecturer details
+                    let detailsHTML = `
+                    <p><strong>Name:</strong> ${personalInfo.name}</p>
+                    <p><strong>Sex:</strong> ${personalInfo.sex}</p>
+                    <p><strong>Email:</strong> ${personalInfo.email}</p>
+                    <h6>Courses:</h6>
+                    <ul>
+                `;
+
+                    list.forEach((course, index) => {
+                        detailsHTML += `
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Course ${index + 1}</h5>
+                <ul class="list-unstyled mb-0">
+                    <li><strong>Course:</strong> ${course.coursez}</li>
+                    <li><strong>Course Code:</strong> ${course.courseCode}</li>
+                    <li><strong>Department:</strong> ${course.department}</li>
+                    <li><strong>Faculty:</strong> ${course.faculty}</li>
+                    <li><strong>Students:</strong> ${course.students}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+                    });
+
+
+                    // Update modal body with lecturer details
+                    document.getElementById('lecturerDetails').innerHTML = detailsHTML;
+
+                    // Show the modal
+                    // const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
+                    // modal.show();
+                })
+                .catch((error) => {
+                    console.error('Error loading lecturer details:', error);
+                    // Handle error, show alert or message to the user
+                    alert('Failed to fetch lecturer details. Please try again.');
+                });
+        }
+
         function registerToCourse(studentId) {
             // Populate the student ID in the form
+            loadStudentSelect()
             document.getElementById('studentSelect').value = studentId;
             showSection('addStudentSection');
         }
-    
+
+        function viewStudentDetails(studentId) {
+            axios.get(`/api/getFullStudentDetails?id=${studentId}`)
+                .then(function (response) {
+                    const { personalInfo, courseList, virtualClasses } = response.data;
+                    const studentDetailsDiv = document.getElementById('studentDetails');
+
+                    let detailsHtml = `
+                <h4>Personal Information</h4>
+                <p><strong>Name:</strong> ${personalInfo.fullName}</p>
+                <p><strong>Matric Number:</strong> ${personalInfo.matricNumber}</p>
+                <p><strong>Email:</strong> ${personalInfo.email}</p>
+                <p><strong>Gender:</strong> ${personalInfo.gender}</p>
+                <p><strong>Faculty:</strong> ${personalInfo.faculty || 'Not set'}</p>
+                <p><strong>Department:</strong> ${personalInfo.department || 'Not set'}</p>
+                <p><strong>Degree Level:</strong> ${personalInfo.degreeLevel || 'Not set'}</p>
+
+                <h4>Enrolled Courses</h4>
+            `;
+
+                    if (courseList.length > 0) {
+                        detailsHtml += '<ul>';
+                        courseList.forEach(course => {
+                            detailsHtml += `<li>${course.courseName} (${course.courseCode}) - ${course.department}, ${course.faculty}</li>`;
+                        });
+                        detailsHtml += '</ul>';
+                    } else {
+                        detailsHtml += '<p>Not enrolled in any courses.</p>';
+                    }
+
+                    detailsHtml += '<h4>Virtual Classes</h4>';
+                    if (virtualClasses.length > 0) {
+                        detailsHtml += '<ul>';
+                        virtualClasses.forEach(vc => {
+                            detailsHtml += `<li>${vc.course} - Starts at: ${new Date(vc.startTime).toLocaleString()}</li>`;
+                        });
+                        detailsHtml += '</ul>';
+                    } else {
+                        detailsHtml += '<p>No virtual classes scheduled.</p>';
+                    }
+
+                    studentDetailsDiv.innerHTML = detailsHtml;
+                    const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+                    modal.show();
+                })
+                .catch(function (error) {
+                    console.error('Error loading student details:', error);
+                    alert('Error loading student details. Please try again.');
+                });
+        }
+        function deleteStudent(studentId) {
+            if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+                axios.delete(`/api/deleteStudent/${studentId}`)
+                    .then(function (response) {
+                        if (response.data.success) {
+                            alert('Student deleted successfully');
+                            loadStudentList(); // Refresh the student list
+                        } else {
+                            alert('Failed to delete student: ' + response.data.message);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.error('Error deleting student:', error);
+                        alert('An error occurred while deleting the student. Please try again.');
+                    });
+            }
+        }
         // Initial load
         showSection('studentListSection');
+        loadLecturerList();
         loadStudentList();
     </script>
-    
+
 </body>
+
 </html>

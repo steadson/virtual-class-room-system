@@ -1,12 +1,19 @@
+const { type } = require('express/lib/response');
 const mongoose = require('mongoose');
 
 const courseSchema = new mongoose.Schema({
-    course: { type: String, required: true },
-    department: { type: String, required: true },
+    courses: { type: String},
+    lecturer:{
+        type:String
+    },
+    courseCode:{type: String},
+    faculty:{type: String},
+    
+    department: { type: String },
     students: [
         {
-            name: { type: String, required: true },
-            matricNumber: { type: String, required: true }
+            name: { type: String },
+            matricNumber: { type: String }
         }
     ]
 });
