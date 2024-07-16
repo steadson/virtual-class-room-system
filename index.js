@@ -10,6 +10,7 @@ const Admin = require('./model/admin.js')
 const Student = require('./model/Student.js'); // Adjust according to your model file structure
 const Course = require('./model/Course');
 const bcrypt = require("bcrypt")
+const nodemailer = require('nodemailer');
 const server = http.createServer(app);
 const io = socketIo(server);
 const session = require('express-session');
@@ -21,6 +22,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 mongoose.connect('mongodb+srv://steadson1:Asiye0802.@cluster0.hrp03tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
     .then(() => console.log('MongoDB connected...'))
     .catch(err => console.log(err));
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'asiyemiea01@gmail.com',
+          pass: 'vrukzdhgugjkoxca'
+        }
+      });
 
     // Session middleware setup
     app.use(session({
@@ -211,12 +220,12 @@ app.post('/admin/admin-signup', async (req, res) => {
         console.log( fullName, sex, email, password )
         // Save the admin data to MongoDB
         await admin.save();
-console.log('admin safe')
+console.log('admin saved')
         // Redirect to login page after successful sign-up
-        res.redirect('/admin/login');
+        res.status(201).json({message:'signed new Admin successfully'})
     } catch (err) {
         console.log(err)
-        res.status(500).send('Error signing up admin');
+        res.status(500).json({error:'Error signing up admin'});
     }
 });
 app.get('/admin/admin-signup', (req,res)=>{
@@ -297,7 +306,6 @@ console.log("geting", req.params)
     }
 });
 
-
 app.get('/api/students', async (req, res) => {
     try {
         const students = await Student.find();
@@ -317,12 +325,11 @@ app.get('/api/lecturers', async (req, res) => {
     }
 });
 
-
 app.post('/api/register-student', async (req, res) => {
     const { studentId, faculty, department, degreeLevel, courses } = req.body;
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // const session = await mongoose.startSession();
+    // session.startTransaction();
 
     try {
         // Update Student
@@ -334,7 +341,7 @@ app.post('/api/register-student', async (req, res) => {
                 degreeLevel, 
                 $addToSet: { courses: { $each: courses } }
             },
-            { new: true, session }
+            { new: true}
         );
 
         if (!student) {
@@ -355,18 +362,18 @@ app.post('/api/register-student', async (req, res) => {
                     faculty: student.faculty,
                     department: student.department
                 },
-                { upsert: true, session }
+                { upsert: true}
             );
         }
 
-        await session.commitTransaction();
+        // await session.commitTransaction();
         res.json({ success: true, message: 'Student registered successfully' });
     } catch (error) {
-        await session.abortTransaction();
+        // await session.abortTransaction();
         console.error('Registration error:', error);
         res.status(500).json({ success: false, message: 'Error registering student' });
     } finally {
-        session.endSession();
+        // session.endSession();
     }
 });
 
@@ -504,7 +511,7 @@ app.post('/api/send-link-to-students', async (req, res) => {
 
         // Update each student's document with the new virtual class information
         const updatePromises = students.map(async (student) => {
-            return Student.findByIdAndUpdate(
+            await Student.findByIdAndUpdate(
                 student._id,
                 {
                     $push: {
@@ -517,6 +524,18 @@ app.post('/api/send-link-to-students', async (req, res) => {
                 },
                 { new: true }
             );
+             // Send email to student
+             if (student.email) {
+            console.log('send email to ', student.email)
+                const mailOptions = {
+                    from: 'asiyemiea01@gmail.com',
+                    to: student.email,
+                    subject: `Virtual Class Link for ${courseTitle}`,
+                    text: `Dear ${student.fullName},\n\nYour virtual class for ${courseTitle} is scheduled for ${startDateTime}.\n\nJoin using this link: ${classLink}\n\nBest regards,\nUniversity of Calabar`
+                };
+
+                await transporter.sendMail(mailOptions);
+            }
         });
 
         await Promise.all(updatePromises);

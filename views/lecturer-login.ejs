@@ -85,7 +85,7 @@
                 })
                 .catch(function (error) {
                     console.error('Error:', error);
-                    showAlert('An error occurred. Please try again later.', 'danger');
+                    showAlert(`${error.response.data.error}.`, 'danger');
                     signUpText.classList.remove('d-none');
             signUpSpinner.classList.add('d-none');
                 });

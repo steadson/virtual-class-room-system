@@ -133,7 +133,7 @@
                 const response = await fetch('/api/logout', { method: 'POST' });
                 const data = await response.json();
                 if (data.success) {
-                    window.location.href = '/admin/login';
+                    window.location.href = '/lecturer/login';
                 } else {
                     console.error('Logout failed:', data.message);
                 }
