@@ -90,6 +90,7 @@
             <div class="d-grid gap-2 ">
 
                 <button  onclick="copyLink()" class="btn btn-primary" type="button">Copy Link</button>
+                <input style="display: none;" value="" id="urll"/>
                 <div class="input-group mb-3">
                     <label class="input-group-text" for="courseSelect">Course</label>
                     <select class="form-select" id="courseSelect">
@@ -151,6 +152,7 @@
 
         function sendLinkToStudents() {
             const classLink = document.getElementById('classLink').value; // Use the value from the input field
+            
             const startTime = document.getElementById('startTime').value;
             const courseSelect = document.getElementById('courseSelect');
     const selectedCourseId = courseSelect.value;
@@ -165,6 +167,8 @@
         return;
     }
 
+const getBaseUrl= document.getElementById('urll').value=window.location.origin
+
             fetch('/api/send-link-to-students', {
                 method: 'POST',
                 headers: {
@@ -172,6 +176,7 @@
                 },
                 body: JSON.stringify({
                     classLink: classLink,
+                    baseUrl:getBaseUrl,
                     startTime: startTime,
                     courseId: selectedCourseId,
             courseTitle: selectedCourseName
