@@ -11,11 +11,14 @@
     <div class="container">
         <div class="d-flex justify-content-start">
             <h1 id="pageName">Join Virtual Class</h1>
-            <button type="button" class="btn btn-secondary" style="margin-left:1.5rem ;"><a
-                href="/student/student-dashboard" class="text-light" style="text-decoration:none;">Back To DashBoard</a></button>
-    
+            <button id="startRecording" class="btn btn-primary mt-3">Start Recording</button>
+            <button id="stopRecording" class="btn btn-danger mt-3" style="display: none;">Stop Recording</button>
+            <video id="recordedVideo" controls style="display:none; margin-top: 20px;"></video>
+            <button id="downloadRecording" class="btn btn-success mt-3" style="display:none;">Download Recording</button>
+            <button type="button" class="btn btn-secondary" style="margin-left:1.5rem;">
+                <a href="/student/student-dashboard" class="text-light" style="text-decoration:none;">Back To Dashboard</a>
+            </button>
         </div>
-       
         <div id="root"></div>
     </div>
 
@@ -42,6 +45,94 @@
                 mode: ZegoUIKitPrebuilt.GroupCall
             },
         });
+
+        const startRecordingButton = document.getElementById('startRecording');
+        const stopRecordingButton = document.getElementById('stopRecording');
+        const recordedVideo = document.getElementById('recordedVideo');
+        const downloadRecordingButton = document.getElementById('downloadRecording');
+
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        startRecordingButton.onclick = async () => {
+            startRecordingButton.style.display = 'none';
+            stopRecordingButton.style.display = 'block';
+
+            // Get the screen stream
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+
+            // Get the audio stream from the microphone
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputDevices = devices.filter(device => device.kind === 'audioinput');
+
+            const audioDeviceId = await selectAudioInputDevice(audioInputDevices);
+
+            const audioStream = await navigator.mediaDevices.getUserMedia({
+                audio: { deviceId: audioDeviceId ? { exact: audioDeviceId } : undefined }
+            });
+
+            // Combine the screen and audio streams
+            const combinedStream = new MediaStream([
+                ...screenStream.getVideoTracks(),
+                ...audioStream.getAudioTracks()
+            ]);
+
+            mediaRecorder = new MediaRecorder(combinedStream);
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+
+                recordedVideo.src = url;
+                recordedVideo.style.display = 'none';
+                downloadRecordingButton.style.display = 'block';
+
+                // Create a download link
+                downloadRecordingButton.onclick = () => {
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = url;
+                    downloadLink.download = 'recording.webm';
+                    downloadLink.click();
+                    downloadRecordingButton.style.display = 'none';
+                };
+
+                // Optionally, upload the recorded video to the server
+                const formData = new FormData();
+                formData.append('video', blob);
+
+                fetch('/api/upload-recording', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Recording uploaded successfully', data);
+                    })
+                    .catch(error => {
+                        console.error('Error uploading recording', error);
+                    });
+            };
+
+            mediaRecorder.start();
+        };
+
+        stopRecordingButton.onclick = () => {
+            startRecordingButton.style.display = 'block';
+            stopRecordingButton.style.display = 'none';
+            mediaRecorder.stop();
+        };
+
+        async function selectAudioInputDevice(audioInputDevices) {
+            const audioDeviceId = audioInputDevices.length ? audioInputDevices[0].deviceId : null;
+            // You can implement a custom selection UI if needed
+            return audioDeviceId;
+        }
     </script>
 </body>
 </html>

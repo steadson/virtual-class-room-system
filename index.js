@@ -2,7 +2,8 @@ const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose')
 const socketIo = require('socket.io');
-const path = require('path');
+const{ initializeApp }= require('firebase/app')
+const config= require('./setup.js')
 const bodyParser = require('body-parser')
 const app = express();
 const db = require('./model/db');
@@ -14,12 +15,16 @@ const nodemailer = require('nodemailer');
 const server = http.createServer(app);
 const io = socketIo(server);
 const ngrok = require('ngrok');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 // const { url } = require('inspector');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
+const { getStorage, ref, getDownloadURL, uploadBytesResumable, deleteObject  } = require("firebase/storage");
 // MongoDB connection
 mongoose.connect('mongodb+srv://steadson1:Asiye0802.@cluster0.hrp03tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
     .then(() => console.log('MongoDB connected...'))
@@ -33,6 +38,13 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+//Initialize a firebase application
+initializeApp(config.firebaseConfig);
+// Initialize Cloud Storage and get a reference to the service
+const storage = getStorage();
+// Setting up multer as a middleware to grab photo uploads
+const upload = multer({ storage: multer.memoryStorage() });
+
 
 // Session middleware setup
 app.use(session({
@@ -45,12 +57,16 @@ app.use(session({
     cookie: { maxAge: 3600000 } // Session expires in 1 hour (adjust as needed)
 }));
 
+
+
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
     res.render('index');
 });
+
+
 app.get('/admin/login', async (req, res) => {
     res.render('admin-login')})
 
@@ -765,6 +781,233 @@ app.get('/api/lecturer-courses', async (req, res) => {
     }
 });
 
+//upload videos
+app.post("/api/uploadVideosorAudio", upload.single("filename"), async (req, res) => {
+    const giveCurrentDateTime = () => {
+        const today = new Date();
+        const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+        const time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        const dateTime = date + ' ' + time;
+        return dateTime;
+    }
+    
+    try {
+        if (!req.file) {
+            return res.status(400).json({error:"No file uploaded."});
+        }
+        const { courseId, departmentId } = req.body;
+        const course = await Course.findById(courseId);
+        const department = await Course.findById(courseId);
+        const dateTime = giveCurrentDateTime();
+
+        const storageRef = ref(storage, `files/${req.file.originalname + "       " + dateTime}`);
+
+        // Create file metadata including the content type
+        const metadata = {
+            contentType: req.file.mimetype,
+        };
+
+        // Upload the file in the bucket storage
+        const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
+        //by using uploadBytesResumable we can control the progress of uploading like pause, resume, cancel
+
+        // Grab the public url
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        
+        // Prepare the upload metadata
+        const uploadMetadata = {
+            fileName: req.file.originalname,
+            contentType: req.file.mimetype,
+            size: req.file.size,
+            uploadDate: new Date(),
+            downloadURL: downloadURL,
+            courseId: course.courses,
+            departmentId: department.department
+        };
+        console.log(uploadMetadata)
+         // Find the user and update their uploads array
+         const updatedUser = await db.findOneAndUpdate(
+           
+            { fullName: req.session.lecturer.fullName },
+            { $push: { uploads: uploadMetadata } },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({error:"User not found"});
+        }
+        console.log('File successfully uploaded and user document updated.');
+        return res.json({
+            message: 'file uploaded to firebase storage',
+            name: req.file.originalname,
+            type: req.file.mimetype,
+            downloadURL: downloadURL
+        })
+    } catch (error) {
+        return res.status(400).send(error.message)
+    }
+   
+});
+app.get('/api/uploadVideosorAudio', async (req, res) => {
+    console.log('in the upload get')
+    try {
+         // Find the user and update their uploads array
+         const lecturer= await db.findOne(
+           
+            { fullName: req.session.lecturer.fullName },
+          
+        );
+        
+      
+        if (!lecturer) {
+            return res.status(404).json({ message: 'Lecturer not found' });
+        }
+
+        // Return the uploads array from the lecturer document
+        res.json({ uploads: lecturer.uploads });
+    } catch (error) {
+        console.error('Error fetching uploads:', error);
+        res.status(500).json({ message: 'Server error while fetching uploads' });
+    }
+});
+
+app.delete("/api/uploadVideosorAudio/:uploadId", async (req, res) => {
+    const { uploadId } = req.params;
+
+    try {
+        const user = await db.findOne({ 'uploads._id': uploadId });
+
+        if (!user) {
+            return res.status(404).json({ error: "Upload not found." });
+        }
+
+        const upload = user.uploads.id(uploadId);
+        const fileRef = ref(storage, upload.downloadURL);
+
+        await deleteObject(fileRef);
+
+        await db.findOneAndUpdate(
+            { 'uploads._id': uploadId },
+            { $pull: { uploads: { _id: uploadId } } },
+            { new: true }
+        );
+
+        console.log('File successfully deleted.');
+        return res.json({ message: 'File successfully deleted.' });
+    } catch (error) {
+        return res.status(400).send(error.message);
+    }
+});
+app.get('/api/studentGetUploadedMedia', async (req, res) => {
+    try {
+        const studentId = req.session.student._id; // Adjust based on your session management
+        const student = await Student.findById(studentId);
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found.' });
+        }
+
+        const studentCourses = student.courses;
+        const uploads = [];
+
+        for (const course of studentCourses) {
+        
+            const courseDoc = await Course.findOne({
+                courses: course,
+                //department: student.department,
+                'students.matricNumber': student.matricNumber
+            });
+
+            if (courseDoc) {
+                console.log('found courseDoc', courseDoc)
+                const lecturer = await db.findOne({
+                    fullName: courseDoc.lecturer,
+                   // 'uploads.courseId': courseDoc.courses,
+                    //'uploads.departmentId': student.department
+                });
+
+                if (lecturer) {
+                    console.log('found lecturer', lecturer)
+                    lecturer.uploads.forEach(upload => {
+                        if (upload.courseId == courseDoc.courses ) {
+                            console.log('pushing')
+                            uploads.push({
+                                ...upload.toObject(),
+                                lecturerName: lecturer.fullName
+                            });
+                        }
+                    });
+                }else{
+                    console.log('lecturer not found')
+                }
+            }
+        }
+
+        res.json({ uploads });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// Helper function to generate a random timetable
+function generateTimetable(courses) {
+    const timetable = {
+        Monday: [],
+        Tuesday: [],
+        Wednesday: [],
+        Thursday: [],
+        Friday: []
+    };
+
+    const days = Object.keys(timetable);
+    const times = [
+        '8:00 AM - 9:00 AM',
+        '9:00 AM - 10:00 AM',
+        '10:00 AM - 11:00 AM',
+        '11:00 AM - 12:00 PM',
+        '12:00 PM - 1:00 PM',
+        '1:00 PM - 2:00 PM',
+        '2:00 PM - 3:00 PM'
+    ];
+
+    courses.forEach(course => {
+        const randomDay = days[Math.floor(Math.random() * days.length)];
+        const randomTime = times.splice(Math.floor(Math.random() * times.length), 1)[0];
+
+        timetable[randomDay].push({
+            course: course.courses,
+            lecturer: course.lecturer,
+            time: randomTime
+        });
+
+        if (times.length === 0) {
+            times.push(
+                '8:00 AM - 9:00 AM',
+                '9:00 AM - 10:00 AM',
+                '10:00 AM - 11:00 AM',
+                '11:00 AM - 12:00 PM',
+                '12:00 PM - 1:00 PM',
+                '1:00 PM - 2:00 PM',
+                '2:00 PM - 3:00 PM'
+            );
+        }
+    });
+
+    return timetable;
+}
+app.get('/api/timetable', async (req, res) => {
+    try {
+        const courses = await Course.find({});
+        if (!courses || courses.length === 0) {
+            return res.status(404).json({ error: 'No courses found' });
+        }
+
+        const timetable = generateTimetable(courses);
+
+        res.json({ timetable });
+    } catch (error) {
+        res.status(500).json({ error: 'An error occurred while fetching the timetable' });
+    }
+});
 async function startServer() {
     const PORT = process.env.PORT || 3000;
     
