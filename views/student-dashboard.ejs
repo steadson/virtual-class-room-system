@@ -5,22 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - University of Calabar</title>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-         .timetable-table {
+        .timetable-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .timetable-table th, .timetable-table td {
+
+        .timetable-table th,
+        .timetable-table td {
             border: 1px solid #dee2e6;
             padding: 8px;
             text-align: center;
         }
+
         .timetable-table th {
             background-color: #f8f9fa;
         }
+
         .tt {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: rgb(5, 34, 12);
@@ -102,6 +106,12 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#" id="timeTableLink">
                                 <i class="bi bi-calendar3 me-2"></i> Timetable
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link " href="#" id="assignmentLink">
+                                <i class="fas fa-upload me-2"></i>
+                                Submit Assigment
                             </a>
                         </li>
                         <li class="nav-item  d-flex"
@@ -215,8 +225,8 @@
                         </div>
                     </div>
                 </div>
-                <div id="uploadsSection" class="d-none" >
-                    <h2>Uploaded Videos</h2>
+                <div id="uploadsSection" class="d-none">
+                    <h2>Uploaded Resources</h2>
                     <table class="table table-striped">
                         <thead>
                             <tr>
@@ -235,7 +245,41 @@
                     </table>
 
                 </div>
+                <div id="assignmentSection" class="d-none">
+                    <h2>Submitted Assignments</h2>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Assigment Name</th>
+                                <th>Course</th>
+                                <th>Department</th>
+                                <th>Submitted Date</th>
+                                <th>Size</th>
+                                <th>Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignmentListBody">
+                            <!-- Uploaded videos list will be populated here -->
+                        </tbody>
+                    </table>
 
+                    <div class="mt-3">
+                        <label for="courseSelect" class="form-label">Select Course:</label>
+                        <select id="courseSelect" class="form-select" required>
+                            <!-- Populate course options dynamically -->
+                        </select>
+
+                        <label for="departmentSelect" class="form-label mt-3">Select Department:</label>
+                        <select id="departmentSelect" class="form-select" required>
+                            <!-- Populate department options dynamically -->
+                        </select>
+                        <br />
+                        <button class="btn btn-primary" onclick="openFileUpload()">Submit Assignment</button>
+                        <input type="file" id="fileUpload" style="display: none;" accept="video/*"
+                            onchange="uploadAssignment()">
+                    </div>
+                </div>
 
             </main>
             <footer class="text-center">
@@ -246,25 +290,133 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        loadCourses()
         function showSection(sectionId) {
             document.querySelectorAll('main > div').forEach(div => div.classList.add('d-none'));
             document.getElementById(sectionId).classList.remove('d-none');
         }
-        document.getElementById('DashBoardLink').addEventListener('click', function(e) {
+        document.getElementById('DashBoardLink').addEventListener('click', function (e) {
             e.preventDefault();
             showSection('DashBoardSection');
         });
-        document.getElementById('uploadLink').addEventListener('click', function(e) {
+
+        document.getElementById('uploadLink').addEventListener('click', function (e) {
             e.preventDefault();
             showSection('uploadsSection');
             loadUploads();
         });
-        document.getElementById('timeTableLink').addEventListener('click', function(e) {
+        document.getElementById('timeTableLink').addEventListener('click', function (e) {
             e.preventDefault();
             showSection('timeTableSection');
-           // loadTimetable();
+            // loadTimetable();
         });
+        document.getElementById('assignmentLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            showSection('assignmentSection');
+            loadAssignments();
+        });
+        function openFileUpload() {
+            document.getElementById('fileUpload').click();
+        }
+function loadCourses(){
+    axios.get('/api/courses2')
+    .then(function(response){
+        const courseSelect = document.getElementById('courseSelect');
+  const department = document.getElementById('departmentSelect')
+         response.data.courses.forEach(course =>{
+            const courze = `
+                 <option value=${course._id}>${course.courses}</option>`;
+                        const departmentz = `
+                 <option value=${course._id}>${course.department}</option>`;
+                 courseSelect.innerHTML += courze;
+                 department.innerHTML += departmentz;
+                })  })
+                .catch(function (error) {
+                    console.error('Error loading courses:', error);
+                    alert('Failed to load courses. Please try again.');
+                });         
+}
+   
+        function uploadAssignment() {
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            const courseSelect = document.getElementById('courseSelect');
+            const departmentSelect = document.getElementById('departmentSelect');
+            if (!file || !courseSelect.value || !departmentSelect.value) {
+                alert('Please select a file and course before uploading.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('filename', file);
+            formData.append('courseId', courseSelect.value);
+            formData.append('departmentId', departmentSelect.value);
+
+            axios.post('/api/uploadAssignment', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+                .then(function (response) {
+                    alert('Assignment uploaded successfully');
+                    loadAssignments();
+                })
+                .catch(function (error) {
+                    console.error('Error uploading assignment:', error);
+                    alert('Failed to upload assignment. Please try again.');
+                });
+        }
+        // Add these functions to your existing JavaScript
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        function loadAssignments() {
+            axios.get('/api/getUploadedAssignments')
+                .then(function (response) {
+                    const assignmentListBody = document.getElementById('assignmentListBody');
+                    assignmentListBody.innerHTML = '';
+                    console.log(response.data)
+                    response.data.assignments.forEach(assignment => {
+                        const row = `
+                    <tr>
+                        <td>${assignment.fileName}</td>
+                        <td>${assignment.courseId}</td>
+                        <td>${assignment.departmentId}</td>
+                        <td>${new Date(assignment.uploadDate).toLocaleString()}</td>
+                        <td>${formatFileSize(assignment.size)}</td>
+                        <td>
+                            <a href="${assignment.downloadURL}" class="btn btn-sm btn-primary" target="_blank">View</a>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${assignment._id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                        assignmentListBody.innerHTML += row;
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Error loading assignments:', error);
+                    alert('Failed to load assignments. Please try again.');
+                });
+        }
+        function deleteAssignment(assignmentId) {
+            if (confirm('Are you sure you want to delete this assignment?')) {
+                axios.delete(`/api/deleteAssignment/${assignmentId}`)
+                    .then(function (response) {
+                        alert('Assignment deleted successfully');
+                        loadAssignments();
+                    })
+                    .catch(function (error) {
+                        console.error('Error deleting assignment:', error);
+                        alert('Failed to delete assignment. Please try again.');
+                    });
+            }
+        }
         async function logout() {
             try {
                 const response = await fetch('/api/logout', { method: 'POST' });
@@ -347,28 +499,28 @@
         }
 
         async function loadUploads() {
-    try {
-        const response = await fetch('/api/studentGetUploadedMedia');
-        const data = await response.json();
-        if (response.ok) {
-            updateUploadsList(data.uploads);
-        } else {
-            alert('Failed to load uploads: ' + data.error);
+            try {
+                const response = await fetch('/api/studentGetUploadedMedia');
+                const data = await response.json();
+                if (response.ok) {
+                    updateUploadsList(data.uploads);
+                } else {
+                    alert('Failed to load uploads: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error loading uploads:', error);
+                alert('An error occurred while loading uploads');
+            }
         }
-    } catch (error) {
-        console.error('Error loading uploads:', error);
-        alert('An error occurred while loading uploads');
-    }
-}
 
-function updateUploadsList(uploads) {
-    const uploadsListBody = document.getElementById('uploadsListBody');
-    uploadsListBody.innerHTML = '';
+        function updateUploadsList(uploads) {
+            const uploadsListBody = document.getElementById('uploadsListBody');
+            uploadsListBody.innerHTML = '';
 
-    if (uploads.length > 0) {
-        uploads.forEach(upload => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
+            if (uploads.length > 0) {
+                uploads.forEach(upload => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
                 <td>${upload.fileName}</td>
                 <td>${upload.courseId}</td>
                 <td>${upload.lecturerName}</td>
@@ -381,14 +533,14 @@ function updateUploadsList(uploads) {
                 
                 </td>
             `;
-            uploadsListBody.appendChild(row);
-        });
-    } else {
-        uploadsListBody.innerHTML = '<tr><td colspan="6">No uploads available.</td></tr>';
-    }
-}
-    
-timeTableLink.addEventListener('click', async () => {
+                    uploadsListBody.appendChild(row);
+                });
+            } else {
+                uploadsListBody.innerHTML = '<tr><td colspan="6">No uploads available.</td></tr>';
+            }
+        }
+
+        timeTableLink.addEventListener('click', async () => {
             try {
                 const response = await fetch('/api/timetable');
                 const data = await response.json();
@@ -404,13 +556,13 @@ timeTableLink.addEventListener('click', async () => {
             }
         });
 
-       
+
 
         function renderTimetable(timetable) {
             timeTableContainer.innerHTML = '';
             const table = document.createElement('table');
             table.className = 'timetable-table';
-            
+
             const thead = document.createElement('thead');
             const daysRow = document.createElement('tr');
             const timeRow = document.createElement('tr');

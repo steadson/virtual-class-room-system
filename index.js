@@ -25,8 +25,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 const { getStorage, ref, getDownloadURL, uploadBytesResumable, deleteObject  } = require("firebase/storage");
-// MongoDB connection
-mongoose.connect('mongodb+srv://steadson1:Asiye0802.@cluster0.hrp03tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+// MongoDB connection mongodb+srv://steadson1:Asiye0802.@cluster0.hrp03tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+mongoose.connect('mongodb+srv://ekpojohn:asiye0802@cluster1.vg4ce.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1')
     .then(() => console.log('MongoDB connected...'))
     .catch(err => console.log(err));
 
@@ -52,7 +52,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: 'mongodb+srv://steadson1:Asiye0802.@cluster0.hrp03tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+        mongoUrl: 'mongodb+srv://ekpojohn:asiye0802@cluster1.vg4ce.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1'
     }),
     cookie: { maxAge: 3600000 } // Session expires in 1 hour (adjust as needed)
 }));
@@ -742,6 +742,20 @@ app.get('/api/courses', async (req, res) => {
     }
 });
 
+// GET /api/courses
+app.get('/api/courses2', async (req, res) => {
+    try {
+        console.log(req.session.student.fullName)
+        // Assuming the logged-in lecturer's information is available in req.user
+        const courses = await Course.find({'students.name': req.session.student.fullName });
+        console.log(courses)
+        res.json({ courses });
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        res.status(500).json({ message: 'Error fetching courses' });
+    }
+});
+
 // GET /api/courses/:courseId/students
 app.get('/api/courses/:courseId/students', async (req, res) => {
     try {
@@ -899,6 +913,114 @@ app.delete("/api/uploadVideosorAudio/:uploadId", async (req, res) => {
         return res.status(400).send(error.message);
     }
 });
+
+// POST - Upload assignment
+app.post("/api/uploadAssignment", upload.single("filename"), async (req, res) => {
+    const giveCurrentDateTime = () => {
+        const today = new Date();
+        const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+        const time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        const dateTime = date + ' ' + time;
+        return dateTime;
+    }
+    
+    try {
+        if (!req.file) {
+            return res.status(400).json({error:"No file uploaded."});
+        }
+        const { courseId, departmentId } = req.body;
+        const course = await Course.findById(courseId);
+        const department = await Course.findById(courseId);
+        
+        const dateTime = giveCurrentDateTime();
+
+        const storageRef = ref(storage, `assignments/${req.file.originalname + "       " + dateTime}`);
+
+        const metadata = {
+            contentType: req.file.mimetype,
+        };
+
+        const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        const assignmentMetadata = {
+            fileName: req.file.originalname,
+            contentType: req.file.mimetype,
+            size: req.file.size,
+            uploadDate: new Date(),
+            downloadURL: downloadURL,
+            courseId: course.courses,
+            departmentId: department.department,
+            studentName:req.session.student.fullName
+        };
+console.log(assignmentMetadata)
+        const updatedStudent = await Student.findOneAndUpdate(
+            { _id: req.session.student._id },
+            { $push: { submittedAssignment: assignmentMetadata } },
+            { new: true }
+        );
+
+        if (!updatedStudent) {
+            return res.status(404).json({error:"Student not found"});
+        }
+
+        console.log('Assignment successfully uploaded and student document updated.');
+        return res.json({
+            message: 'Assignment uploaded to firebase storage',
+            name: req.file.originalname,
+            type: req.file.mimetype,
+            downloadURL: downloadURL
+        });
+    } catch (error) {
+        return res.status(400).send(error.message);
+    }
+});
+// GET - Retrieve uploaded assignments
+app.get('/api/getUploadedAssignments', async (req, res) => {
+    try {
+        const student = await Student.findById(req.session.student._id);
+        
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        res.json({ assignments: student.submittedAssignment });
+    } catch (error) {
+        console.error('Error fetching assignments:', error);
+        res.status(500).json({ message: 'Server error while fetching assignments' });
+    }
+});
+// DELETE - Remove an uploaded assignment
+app.delete("/api/deleteAssignment/:assignmentId", async (req, res) => {
+    const { assignmentId } = req.params;
+
+    try {
+        const student = await Student.findById(req.session.student._id);
+
+        if (!student) {
+            return res.status(404).json({ error: "Student not found." });
+        }
+
+        const assignment = student.submittedAssignment.id(assignmentId);
+        if (!assignment) {
+            return res.status(404).json({ error: "Assignment not found." });
+        }
+
+        const fileRef = ref(storage, assignment.downloadURL);
+        await deleteObject(fileRef);
+
+        await Student.findOneAndUpdate(
+            { _id: req.session.student._id },
+            { $pull: { submittedAssignment: { _id: assignmentId } } },
+            { new: true }
+        );
+
+        console.log('Assignment successfully deleted.');
+        return res.json({ message: 'Assignment successfully deleted.' });
+    } catch (error) {
+        return res.status(400).send(error.message);
+    }
+});
 app.get('/api/studentGetUploadedMedia', async (req, res) => {
     try {
         const studentId = req.session.student._id; // Adjust based on your session management
@@ -945,6 +1067,47 @@ app.get('/api/studentGetUploadedMedia', async (req, res) => {
 
         res.json({ uploads });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/lecturerGetSubmittedDoc', async (req, res) => {
+    try {
+        const lecturerId = req.session.lecturer._id;
+        const lecturer = await db.findById(lecturerId);
+        if (!lecturer) {
+            return res.status(404).json({ error: 'Lecturer not found.' });
+        }
+
+        const lecturerName = lecturer.fullName;
+        const submissions = [];
+
+        // Find all courses taught by this lecturer
+        const courses = await Course.find({ lecturer: lecturerName });
+
+        for (const course of courses) {
+            // Find all students enrolled in this course
+            const students = await Student.find({ courses: course.courses });
+
+            for (const student of students) {
+                // Filter submitted assignments for this course
+                const courseSubmissions = student.submittedAssignment.filter(
+                    submission => submission.courseId === course.courses
+                );
+
+                submissions.push(...courseSubmissions.map(submission => ({
+                    ...submission.toObject(),
+                    studentName: student.fullName,
+                    studentMatricNumber: student.matricNumber,
+                    courseName: course.courses,
+                    courseCode: course.courseCode
+                })));
+            }
+        }
+
+        res.json({ submissions });
+    } catch (error) {
+        console.error('Error fetching submitted assignments:', error);
         res.status(500).json({ error: error.message });
     }
 });

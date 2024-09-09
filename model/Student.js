@@ -14,8 +14,19 @@ const studentSchema = new mongoose.Schema({
     virtualClasses: [{
         course: {type: String},
         link: {type: String},
-        startTime: {type: Date}
-    }]
+        startTime: {type: Date},
+    }],
+    submittedAssignment:[
+        {
+            fileName: String,
+            contentType: String,
+            size: Number,
+            uploadDate: Date,
+            downloadURL: String,
+            courseId : String,
+            departmentId : String
+        }
+    ]
 });
 
 module.exports = mongoose.model('Student', studentSchema);
