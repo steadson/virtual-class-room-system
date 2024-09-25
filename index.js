@@ -2,14 +2,17 @@ const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose')
 const socketIo = require('socket.io');
-const{ initializeApp }= require('firebase/app')
-const config= require('./setup.js')
+const { initializeApp } = require('firebase/app')
+const config = require('./setup.js')
 const bodyParser = require('body-parser')
 const app = express();
 const db = require('./model/db');
+const ExamResult = require('./model/examResultSchema.js')
+const CBTExam = require('./model/cbtExam.js')
 const Admin = require('./model/admin.js')
+const Attendance = require('./model/attendance.js')
 const Student = require('./model/Student.js'); // Adjust according to your model file structure
-const Course = require('./model/Course');
+const Course = require('./model/course');
 const bcrypt = require("bcrypt")
 const nodemailer = require('nodemailer');
 const server = http.createServer(app);
@@ -24,7 +27,7 @@ const MongoStore = require('connect-mongo');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
-const { getStorage, ref, getDownloadURL, uploadBytesResumable, deleteObject  } = require("firebase/storage");
+const { getStorage, ref, getDownloadURL, uploadBytesResumable, deleteObject } = require("firebase/storage");
 // MongoDB connection mongodb+srv://steadson1:Asiye0802.@cluster0.hrp03tt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 mongoose.connect('mongodb+srv://ekpojohn:asiye0802@cluster1.vg4ce.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1')
     .then(() => console.log('MongoDB connected...'))
@@ -68,16 +71,18 @@ app.get('/', (req, res) => {
 
 
 app.get('/admin/login', async (req, res) => {
-    res.render('admin-login')})
+    res.render('admin-login')
+})
 
 app.get('/classes/login', (req, res) => {
+
     // Check if the user is already logged in as a student
     if (req.session && req.session.student) {
-        
+
         res.redirect('/student/student-dashboard');
-       
+
     } else {
-       
+
         res.redirect('/student/login');
     }
 });
@@ -358,28 +363,35 @@ app.get('/api/lecturers', async (req, res) => {
 app.post('/api/register-student', async (req, res) => {
     const { studentId, faculty, department, degreeLevel, courses } = req.body;
 
-    // const session = await mongoose.startSession();
-    // session.startTransaction();
-
     try {
-        // Update Student
-        const student = await Student.findByIdAndUpdate(
+        // Find the student
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        // Filter out courses that the student is already registered for
+        const newCourses = courses.filter(course => !student.courses.includes(course));
+
+        if (newCourses.length === 0) {
+            return res.status(404).json({ success: false, message: 'Student already registered for all specified courses' });
+        }
+
+        // Update student with new courses and other details
+        const updatedStudent = await Student.findByIdAndUpdate(
             studentId,
             {
-                faculty,
-                department,
-                degreeLevel,
-                $addToSet: { courses: { $each: courses } }
+                // faculty,
+                 department,
+                 degreeLevel,
+                $addToSet: { courses: { $each: newCourses } }
             },
             { new: true }
         );
 
-        if (!student) {
-            throw new Error('Student not found');
-        }
-
         // Update Courses
-        for (const course of courses) {
+        for (const course of newCourses) {
             await Course.findOneAndUpdate(
                 { courses: course, department: student.department },
                 {
@@ -396,40 +408,78 @@ app.post('/api/register-student', async (req, res) => {
             );
         }
 
-        // await session.commitTransaction();
-        res.json({ success: true, message: 'Student registered successfully' });
+        res.json({
+            success: true,
+            message: 'Student registered successfully',
+            newCourses: newCourses,
+            totalCourses: updatedStudent.courses.length
+        });
     } catch (error) {
-        // await session.abortTransaction();
         console.error('Registration error:', error);
         res.status(500).json({ success: false, message: 'Error registering student' });
-    } finally {
-        // session.endSession();
     }
 });
 
 app.post('/api/assign-course-to-lecturer', async (req, res) => {
     console.log('Received lecturer info', req.body);
-    const { name2, faculty2, department2, degreeLevel2, course2, courseCode2 } = req.body;
+    const { name2, faculty2, department2, degreeLevel2, thecourse, courseCode2 } = req.body;
+    
     try {
-        const Lectuerer = await db.findOne({ fullName: name2 });
-        if (!Lectuerer) {
-            return res.status(404).json({ success: false, message: 'lecturer not found' });
+        const lecturer = await db.findOne({ fullName: name2 });
+        if (!lecturer) {
+            return res.status(404).json({ success: false, message: 'Lecturer not found' });
         }
+
+        const existingCourse = await Course.findOne({
+            courses: thecourse,
+            department: department2,
+            lecturer: name2
+        });
+
+        if (existingCourse) {
+            // Course is already assigned to this lecturer
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Course is already assigned to this lecturer',
+                noChangeMade: true
+            });
+        }
+const existingCourseWithAnotherLecturer = await Course.findOne({
+    courses:thecourse,
+    department: department2
+})
+if(existingCourseWithAnotherLecturer){
+    if(typeof(existingCourseWithAnotherLecturer.lecturer)==='string' && existingCourseWithAnotherLecturer.lecturer !== (undefined || null)){
+        return res.status(404).json({ 
+            success: true, 
+            message: `Course is already assigned to another lecturer ,${ existingCourseWithAnotherLecturer.lecturer}`,
+            noChangeMade: true
+        });
+    }
+}
         const courseData = await Course.findOne({
-            courses: course2, department: department2
-        })
+            courses: thecourse, 
+            department: department2
+        });
 
         if (courseData) {
             // Update existing course
-            courseData.lecturer = name2
-            courseData.faculty = faculty2
-            courseData.courseCode = courseCode2
-            // courseData.courses = course2
-            await courseData.save();
+            if (courseData.lecturer !== name2) {
+                courseData.lecturer = name2;
+                courseData.faculty = faculty2;
+                courseData.courseCode = courseCode2;
+                await courseData.save();
+            } else {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Course is already assigned to this lecturer',
+                    noChangeMade: true
+                });
+            }
         } else {
+            // Create new course
             const newCourse = new Course({
-
-                courses: course2,
+                courses: thecourse,
                 department: department2,
                 lecturer: name2,
                 faculty: faculty2,
@@ -437,13 +487,18 @@ app.post('/api/assign-course-to-lecturer', async (req, res) => {
             });
             await newCourse.save();
         }
-        res.json({ success: true, message: 'lecturer assigning successfully' });
+
+        res.json({ 
+            success: true, 
+            message: 'Lecturer assigned successfully',
+            noChangeMade: false
+        });
     }
     catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Error assigning lecturer' });
     }
-})
+});
 app.get('/api/getFullLecturerDetails', async (req, res) => {
     const { id } = req.query
     console.log(req.query)
@@ -525,7 +580,7 @@ app.get('/virtual-class', (req, res) => {
 });
 app.post('/api/send-link-to-students', async (req, res) => {
     const { classLink, startTime, courseId, courseTitle, baseUrl } = req.body;
-console.log(baseUrl)
+    console.log(baseUrl)
     if (!req.session || !req.session.lecturer) {
         return res.status(401).json({ success: false, message: 'Not authenticated' });
     }
@@ -533,7 +588,17 @@ console.log(baseUrl)
     try {
         // Find students enrolled in the specific course
         const students = await Student.find({ courses: courseTitle });
-
+        const findCourse = await Course.findById(courseId)
+        if (findCourse) {
+            let department = findCourse.department
+            let course = findCourse.courses
+            const newAttendance = new Attendance({
+                department, course, startTime
+            })
+            console.log(newAttendance)
+            await newAttendance.save();
+            console.log('saved')
+        }
         if (students.length === 0) {
             return res.status(404).json({ success: false, message: 'No students found for this course' });
         }
@@ -586,6 +651,104 @@ console.log(baseUrl)
         res.status(500).json({ success: false, message: 'Error sending link to students' });
     }
 });
+app.post('/api/match-virtual-class', async (req, res) => {
+    const { urlIdentifier } = req.body;
+
+    try {
+        // Find a student whose virtualClasses array contains a link that ends with the given URL identifier
+        const student = await Student.findOne({
+            virtualClasses: {
+                $elemMatch: {
+                    link: { $regex: new RegExp(`${urlIdentifier}$`) } // Match the link ending with the identifier
+                }
+            }
+        });
+
+        if (student) {
+            // Find the specific virtual class in the student's virtualClasses array
+            const matchedClass = student.virtualClasses.find(vc => vc.link.endsWith(urlIdentifier));
+
+            if (matchedClass) {
+                // Send the course, startTime, and fullName back to the frontend
+             const course= matchedClass.course
+            const startTime= matchedClass.startTime
+             const theStudent={name:req.session.student.fullName,
+                matricNumber: req.session.student.matricNumber
+             }  
+             const department = req.session.student.department
+             const startT = new Date(startTime)
+             startT.setHours(startTime.getHours()+1)
+             const startTimeString = startT.toISOString().slice(0, 16); // Convert to 'YYYY-MM-DDTHH:MM' format
+             const updateAttendance = await Attendance.findOneAndUpdate(
+                 { course: course, department: department, startTime: startTimeString },
+                 { $addToSet: { students: theStudent } },
+                 { new: true }
+             )
+             console.log(startTimeString)
+             console.log('updateAttendance', updateAttendance)
+                res.json({
+                    success: true,
+                    fullName: student.fullName,
+                    course: matchedClass.course,
+                    startTime: matchedClass.startTime
+                });
+            }
+        } else {
+            // No match found
+            res.json({ success: false, message: 'No matching virtual class found.' });
+        }
+    } catch (error) {
+        console.error('Error matching virtual class:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+app.post('/api/joinedVirtualClass', async (req, res) => {
+    const { index } = req.body;
+    console.log("virtusl class index", req.body)
+    if (!req.session || !req.session.student) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    try {
+        const student = await Student.findById(req.session.student._id);
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        if (index < 0 || index >= student.virtualClasses.length) {
+            return res.status(400).json({ success: false, message: 'Invalid virtual class index' });
+        }
+
+        const vClass = student.virtualClasses[index];
+        const department = student.department
+        const findCourse = await Course.find({ courses: vClass.course, department: department })
+        console.log("vClass:", vClass)
+        const course = vClass.course
+        const startTime = vClass.startTime
+        const theStudent = {
+            name: req.session.student.fullName,
+            matricNumber: req.session.student.matricNumber
+        }
+        // Assuming vClass.startTime is a Date object
+        const startT = new Date(vClass.startTime);
+        startT.setHours(startTime.getHours() + 1); // Add 1 hour to the start time
+
+        const startTimeString = startT.toISOString().slice(0, 16); // Convert to 'YYYY-MM-DDTHH:MM' format
+        const updateAttendance = await Attendance.findOneAndUpdate(
+            { course: vClass.course, department: department, startTime: startTimeString },
+            { $addToSet: { students: theStudent } },
+            { new: true }
+        )
+        console.log(startTimeString)
+        console.log('updateAttendance', updateAttendance)
+
+
+
+        res.json({ success: true, message: 'attendance taken' });
+    } catch (err) {
+        console.error('Error in /api/delete-virtual-class:', err);
+        res.status(500).json({ success: false, message: 'Error taking attendance' });
+    }
+})
 app.post('/api/delete-virtual-class', async (req, res) => {
     const { index } = req.body;
 
@@ -612,6 +775,7 @@ app.post('/api/delete-virtual-class', async (req, res) => {
         res.status(500).json({ success: false, message: 'Error deleting virtual class' });
     }
 });
+
 app.get('/student/join-virtual-class/:course/:classID', (req, res) => {
     const { course, classID } = req.params;
     console.log(course, classID)
@@ -747,7 +911,7 @@ app.get('/api/courses2', async (req, res) => {
     try {
         console.log(req.session.student.fullName)
         // Assuming the logged-in lecturer's information is available in req.user
-        const courses = await Course.find({'students.name': req.session.student.fullName });
+        const courses = await Course.find({ 'students.name': req.session.student.fullName });
         console.log(courses)
         res.json({ courses });
     } catch (error) {
@@ -804,10 +968,10 @@ app.post("/api/uploadVideosorAudio", upload.single("filename"), async (req, res)
         const dateTime = date + ' ' + time;
         return dateTime;
     }
-    
+
     try {
         if (!req.file) {
-            return res.status(400).json({error:"No file uploaded."});
+            return res.status(400).json({ error: "No file uploaded." });
         }
         const { courseId, departmentId } = req.body;
         const course = await Course.findById(courseId);
@@ -828,7 +992,7 @@ app.post("/api/uploadVideosorAudio", upload.single("filename"), async (req, res)
         // Grab the public url
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        
+
         // Prepare the upload metadata
         const uploadMetadata = {
             fileName: req.file.originalname,
@@ -840,16 +1004,16 @@ app.post("/api/uploadVideosorAudio", upload.single("filename"), async (req, res)
             departmentId: department.department
         };
         console.log(uploadMetadata)
-         // Find the user and update their uploads array
-         const updatedUser = await db.findOneAndUpdate(
-           
+        // Find the user and update their uploads array
+        const updatedUser = await db.findOneAndUpdate(
+
             { fullName: req.session.lecturer.fullName },
             { $push: { uploads: uploadMetadata } },
             { new: true }
         );
 
         if (!updatedUser) {
-            return res.status(404).json({error:"User not found"});
+            return res.status(404).json({ error: "User not found" });
         }
         console.log('File successfully uploaded and user document updated.');
         return res.json({
@@ -861,19 +1025,19 @@ app.post("/api/uploadVideosorAudio", upload.single("filename"), async (req, res)
     } catch (error) {
         return res.status(400).send(error.message)
     }
-   
+
 });
 app.get('/api/uploadVideosorAudio', async (req, res) => {
     console.log('in the upload get')
     try {
-         // Find the user and update their uploads array
-         const lecturer= await db.findOne(
-           
+        // Find the user and update their uploads array
+        const lecturer = await db.findOne(
+
             { fullName: req.session.lecturer.fullName },
-          
+
         );
-        
-      
+
+
         if (!lecturer) {
             return res.status(404).json({ message: 'Lecturer not found' });
         }
@@ -923,15 +1087,15 @@ app.post("/api/uploadAssignment", upload.single("filename"), async (req, res) =>
         const dateTime = date + ' ' + time;
         return dateTime;
     }
-    
+
     try {
         if (!req.file) {
-            return res.status(400).json({error:"No file uploaded."});
+            return res.status(400).json({ error: "No file uploaded." });
         }
         const { courseId, departmentId } = req.body;
         const course = await Course.findById(courseId);
         const department = await Course.findById(courseId);
-        
+
         const dateTime = giveCurrentDateTime();
 
         const storageRef = ref(storage, `assignments/${req.file.originalname + "       " + dateTime}`);
@@ -951,9 +1115,9 @@ app.post("/api/uploadAssignment", upload.single("filename"), async (req, res) =>
             downloadURL: downloadURL,
             courseId: course.courses,
             departmentId: department.department,
-            studentName:req.session.student.fullName
+            studentName: req.session.student.fullName
         };
-console.log(assignmentMetadata)
+        console.log(assignmentMetadata)
         const updatedStudent = await Student.findOneAndUpdate(
             { _id: req.session.student._id },
             { $push: { submittedAssignment: assignmentMetadata } },
@@ -961,7 +1125,7 @@ console.log(assignmentMetadata)
         );
 
         if (!updatedStudent) {
-            return res.status(404).json({error:"Student not found"});
+            return res.status(404).json({ error: "Student not found" });
         }
 
         console.log('Assignment successfully uploaded and student document updated.');
@@ -979,7 +1143,7 @@ console.log(assignmentMetadata)
 app.get('/api/getUploadedAssignments', async (req, res) => {
     try {
         const student = await Student.findById(req.session.student._id);
-        
+
         if (!student) {
             return res.status(404).json({ message: 'Student not found' });
         }
@@ -1033,7 +1197,7 @@ app.get('/api/studentGetUploadedMedia', async (req, res) => {
         const uploads = [];
 
         for (const course of studentCourses) {
-        
+
             const courseDoc = await Course.findOne({
                 courses: course,
                 //department: student.department,
@@ -1044,14 +1208,14 @@ app.get('/api/studentGetUploadedMedia', async (req, res) => {
                 console.log('found courseDoc', courseDoc)
                 const lecturer = await db.findOne({
                     fullName: courseDoc.lecturer,
-                   // 'uploads.courseId': courseDoc.courses,
+                    // 'uploads.courseId': courseDoc.courses,
                     //'uploads.departmentId': student.department
                 });
 
                 if (lecturer) {
                     console.log('found lecturer', lecturer)
                     lecturer.uploads.forEach(upload => {
-                        if (upload.courseId == courseDoc.courses ) {
+                        if (upload.courseId == courseDoc.courses) {
                             console.log('pushing')
                             uploads.push({
                                 ...upload.toObject(),
@@ -1059,7 +1223,7 @@ app.get('/api/studentGetUploadedMedia', async (req, res) => {
                             });
                         }
                     });
-                }else{
+                } else {
                     console.log('lecturer not found')
                 }
             }
@@ -1171,9 +1335,234 @@ app.get('/api/timetable', async (req, res) => {
         res.status(500).json({ error: 'An error occurred while fetching the timetable' });
     }
 });
+
+//cbt sections
+
+// Create a new CBT exam
+app.post('/api/cbtexam/create', async (req, res) => {
+    try {
+        const { lecturer, startTime, examDuration, course, department, questions } = req.body;
+        const newExam = new CBTExam({
+            lecturer,
+            startTime,
+            examDuration,
+            course,
+            department,
+            questions
+        });
+        console.log(newExam)
+        await newExam.save();
+        res.status(201).json({ message: 'CBT exam created successfully', exam: newExam });
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating CBT exam', error: error.message });
+    }
+});
+
+// Get available exams for a student
+app.get('/api/student/available-exams', async (req, res) => {
+    console.log("in available course")
+    try {
+        const student = await Student.findById(req.session.student._id);
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        const now = new Date();
+        const twoHoursFromNow = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // 2 hours from now
+        const availableExams = await CBTExam.find({
+            course: { $in: student.courses },
+            startTime: { $lte: twoHoursFromNow }
+        }).select('-questions.answer');
+        console.log('available exam::', availableExams)
+        // Current date and time
+        const noww = new Date();
+
+        // Helper function to calculate the exam end time
+        const addDurationToStartTime = (startTime, duration) => {
+            const [hours, minutes] = duration.split(':').map(Number);
+            const endTime = new Date(startTime);
+            endTime.setHours(endTime.getHours() + hours);
+            endTime.setMinutes(endTime.getMinutes() + minutes);
+            return endTime;
+        };
+
+        // Function to filter exams
+        const filteredExams = availableExams.filter(exam => {
+            const examEndTime = addDurationToStartTime(exam.startTime, exam.examDuration);
+            const hoursSinceEnd = (now - examEndTime) / (1000 * 60 * 60); // Difference in hours
+
+            // Show if it's a future exam or if it's within the past 24 hours
+            return noww < examEndTime || hoursSinceEnd <= 24;
+        });
+
+        console.log(filteredExams);
+
+        res.status(200).json(filteredExams);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving available exams', error: error.message });
+    }
+});
+
+// Get exam details (when student starts the exam)
+app.get('/api/student/exam/:examId', async (req, res) => {
+    console.log('in exam router')
+    try {
+        const exam = await CBTExam.findById(req.params.examId).select('-questions.answer');
+        if (!exam) {
+            return res.status(404).json({ message: 'Exam not found' });
+        }
+        const now = new Date(); // Get the current date and time
+        const examStartTime = new Date(exam.startTime); // Ensure exam.startTime is a Date object
+
+        // Calculate the end time (start time + 2 hours)
+        const examEndTime = new Date(examStartTime);
+        examEndTime.setHours(examEndTime.getHours() + 2); // Add 2 hours to the exam start time
+
+        // Check if the current time is within the allowed time frame
+
+        if (now < examStartTime) {
+            return res.status(403).json({ message: `cannot start exam now, exam start at ${examStartTime}` })
+        }
+        else if (now > examEndTime) {
+            return res.status(403).json({ message: `The exam is no longer available.` })
+        }
+        res.status(200).json({
+            _id: exam._id,
+            course: exam.course,
+            department: exam.department,
+            startTime: exam.startTime,
+            examDuration: exam.examDuration,
+            questions: exam.questions.map(q => ({
+                question: q.question,
+                options: q.options
+            }))
+        })
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving exam details', error: error.message });
+    }
+});
+
+// Submit exam answers
+app.post('/api/student/submit-exam', async (req, res) => {
+    try {
+        const { examId, answers } = req.body;
+        const studentId = req.session.student._id
+        const exam = await CBTExam.findById(examId);
+        if (!exam) {
+            return res.status(404).json({ message: 'Exam not found' });
+        }
+
+        let score = 0;
+        const gradedAnswers = exam.questions.map((question, index) => {
+            const isCorrect = question.answer === answers[index];
+            if (isCorrect) score++;
+            return {
+                question: question.question,
+                studentAnswer: answers[index],
+                correctAnswer: question.answer,
+                isCorrect
+            };
+        });
+
+        const examResult = new ExamResult({
+            student: studentId,
+            exam: examId,
+            score,
+            totalQuestions: exam.questions.length,
+            answers: gradedAnswers
+        });
+
+        await examResult.save();
+
+        res.status(201).json({
+            message: 'Exam submitted successfully',
+            score,
+            totalQuestions: exam.questions.length,
+            answers: gradedAnswers
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error submitting exam', error: error.message });
+    }
+});
+
+app.get('/api/lecturer/exam-results/', async (req, res) => {
+    try {
+        const lecturerId = req.session.lecturer._id;
+
+        // Find all exams created by this lecturer
+        const exams = await CBTExam.find({ lecturer: req.session.lecturer.fullName });
+        const examIds = exams.map(exam => exam._id);
+
+        // Find all results for these exams
+        const results = await ExamResult.find({ exam: { $in: examIds } })
+            .populate('student', 'fullName department')
+            .populate('exam', 'course startTime examDuration');
+
+
+        // Format the results
+        const formattedResults = await Promise.all(results.map(async result => {
+            const exam = await CBTExam.findById(result.exam._id);
+            //const startTime = new Date(exam.startTime)
+            const options = {
+                year: 'numeric',
+                month: 'long', // Use 'numeric' for month as a number (1-12)
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true // Use 12-hour clock (AM/PM)
+            };
+            const formattedDate = exam.startTime.toLocaleString('en-US', options);
+            console.log(formattedDate)
+            return {
+                studentName: result.student.fullName,
+                department: result.student.department,
+                course: result.exam.course,
+                score: result.score,
+                totalQuestions: exam.questions.length,
+                startTime: formattedDate,
+                examDuration: exam.examDuration
+            };
+        }));
+        console.log("formatted Result", formattedResults)
+        res.status(200).json(formattedResults);
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Error retrieving exam results', error: error.message });
+    }
+});
+
+app.get('/api/lecturer-attendance/', async (req, res) => {
+    try {
+        const lecturer = req.session.lecturer.fullName
+
+        // Find all courses taught by the lecturer
+        const courses = await Course.find({ lecturer: lecturer });
+
+        // Get course names
+        const courseNames = courses.map(course => course.courses);
+
+        // Find attendance documents for these courses
+        const attendanceDocuments = await Attendance.find({ course: { $in: courseNames } });
+        console.log(attendanceDocuments)
+        // Format the response to include all required information
+        const formattedAttendance = attendanceDocuments.map(doc => ({
+            course: doc.course,
+            department: doc.department,
+            startTime: doc.startTime,
+            numberOfAttendees: doc.students.length,
+            students: doc.students
+        }));
+
+        res.json(formattedAttendance);
+    } catch (error) {
+        console.error('Error fetching attendance:', error);
+        res.status(500).json({ message: 'Error fetching attendance data' });
+    }
+});
+
 async function startServer() {
     const PORT = process.env.PORT || 3000;
-    
+
     server.listen(PORT, async () => {
         console.log(`Server is running on port ${PORT}`);
 

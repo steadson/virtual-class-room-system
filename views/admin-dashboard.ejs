@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
+       
         #noStudent,
         #noLecturer {
             position: absolute;
@@ -21,9 +22,12 @@
             background-color: #131f2b;
             padding: 10px;
             text-align: center;
-            width: 100%;
+            width: 100vw;
             color: white;
             font-family: Arial, Helvetica, sans-serif;
+            box-sizing: border-box;
+            margin: 0;
+           
         }
 
         .special:hover {
@@ -38,6 +42,7 @@
         body {
             box-sizing: border-box;
             margin: 0;
+            padding: 0;
         }
     </style>
 </head>
@@ -139,21 +144,41 @@
                 <h4 style="text-align:center; font-weight: bold; font-family: Helvetica, sans-serif; color: #131f2b;">
                     HOD/Admin Block</h4>
                 <div id="alertPlaceholder"></div>
-                <div
-                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Welcome, <span id="adminName"></span></h1>
-                </div>
+                
 
                 <div id="addLecturerSection" class="d-none">
                     <div id="alertPlaceholder2"></div>
+                    
                     <h3>Assign courses to Lecturer</h3>
-                    <form id="registerLecturerForm">
-                        <label for="lecturer" class="form-label">Select lecturer</label>
-                        <select class="form-select" id="lecturer" name="lecturer" required>
-                            <!-- Options will be populated dynamically -->
-                        </select>
+                    <form id="registerLecturerForm" >
+                        <div class="mb-3 col-6">
+                            <label for="academicSession" class="form-label">Select Academic Session</label>
+                            <select class="form-select" id="academicSession">
+                                <option value="">Select Academic Session</option>
+                                <option value="2010/2011">2010/2011 Academic Session</option>
+                                <option value="2011/2012">2011/2012 Academic Session</option>
+                                <option value="2012/2013">2012/2013 Academic Session</option>
+                                <option value="2013/2014">2013/2014 Academic Session</option>
+                                <option value="2014/2015">2014/2015 Academic Session</option>
+                                <option value="2015/2016">2015/2016 Academic Session</option>
+                                <option value="2016/2017">2016/2017 Academic Session</option>
+                                <option value="2017/2018">2017/2018 Academic Session</option>
+                                <option value="2018/2019">2018/2019 Academic Session</option>
+                                <option value="2019/2020">2019/2020 Academic Session</option>
+                                <option value="2020/2021">2020/2021 Academic Session</option>
+                                <option value="2021/2022">2021/2022 Academic Session</option>
+                                <option value="2022/2023">2022/2023 Academic Session</option>
+                                <option value="2023/2024">2023/2024 Academic Session</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6">
+                            <label for="lecturer" class="form-label">Select lecturer</label>
+                            <select class="form-select col-6" id="lecturer" name="lecturer" required>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
                         <!-- select faculty -->
-                        <div class="mb-3">
+                        <div class="mb-3 col-6">
                             <label for="faculty" class="form-label">Faculty</label>
                             <select class="form-select" id="faculty2" name="faculty" required>
                                 <option value="">Select Faculty</option>
@@ -170,7 +195,7 @@
                             </select>
                         </div>
                         <!-- select Department -->
-                        <div class="form-group">
+                        <div class="form-group col-6">
                             <label for="department2">Select Department</label>
                             <select class="form-control" id="department2" name="department2" required>
                                 <option value="">select Department</option>
@@ -193,26 +218,43 @@
                             </select>
                         </div>
 
-                        <!--pick course-->
-                        <div class="mb-3">
-                            <label for="course2" class="form-label">pick course</label>
-                            <select class="form-select" id="course2" required>
-                                <option value="">Select Course</option>
-                                <option value="Mobile/Adaptive Technologies">Mobile/Adaptive Technologies</option>
-                                <option value="Operating System">Operating System</option>
-                                <option value="Advance Database Systems">Advance Database Systems</option>
-                                <option value="Programming Languages">Programming Languages</option>
-                                <option value="Object Oriented Programming">Object Oriented Programming</option>
-                                <option value="Advance Computer Algorithms">Advance Computer Algorithms</option>
-                                <option value="Computer Communications and Network">Computer Communications and Network</option>
-                                <option value="Advance Computer Architecture">Advance Computer Architecture</option>
-                                <option value="Software Engineering">Software Engineering</option>
-                                <option value="Compiler Design and Construction">Compiler Design and Construction</option>
-                                <option value="BioInformatics">BioInformatics</option>
-                            </select>
+                        <br>
+                        <div class="row">
+                            <!-- First Semester Courses -->
+                            <div class="mb-3 col-6">
+                                <label for="course1" class="form-label">Pick First Semester Course</label>
+                                <select class="form-select course2" id="course1" >
+                                    <option value="">Select Course</option>
+                                   
+                                    <option value="Computer Communications and Network">Computer Communications and Network</option>
+                                    <option value="Advance Computer Architecture">Advance Computer Architecture</option>
+                                    <option value="Software Engineering">Software Engineering</option>
+                                    <option value="Compiler Design and Construction">Compiler Design and Construction</option>
+                                    <option value="BioInformatics">BioInformatics</option>
+                                    
+                                </select>
+                            </div>
+                        
+                            <!-- Second Semester Courses -->
+                            <div class="mb-3 col-6">
+                                <label for="course2" class="form-label">Pick Second Semester Course</label>
+                                <select class="form-select course2" id="course2" >
+                                    <option value="">Select Course</option>
+                                    <option value="Object Oriented Programming">Object Oriented Programming</option>
+                                    <option value="Programming Languages">Programming Languages</option>
+                                    <option value="Advance Database Systems">Advance Database Systems</option>
+                                    <option value="Operating System">Operating System</option>
+                                    <option value="Mobile/Adaptive Technologies">Mobile/Adaptive Technologies</option>
+                                    <option value="Advance Computer Algorithms">Advance Computer Algorithms</option>
+                                   
+                                </select>
+                            </div>
+                        </div>
+                        <div id="courseError" class="text-danger mb-3" style="display: none;">
+                            Please select at least one course.
                         </div>
                         <!--select Degree-->
-                        <div class="mb-3">
+                        <div class="mb-3 col-6">
                             <label for="degree_level2" class="form-label">Degree Level</label>
                             <select class="form-select" id="degree_level2" required>
                                 <option value="">Select Degree Level</option>
@@ -221,7 +263,7 @@
                                 <option value="doctorate">Doctorate</option>
                             </select>
                         </div>
-                        <div class="mb-3" style="width: 40%;">
+                        <div class="mb-3 col-6" style="width: 40%;">
                             <input class="form-control" type="text" placeholder="Course code" id="courseCode2"
                                 aria-label="default input example">
                         </div>
@@ -238,6 +280,10 @@
 
                 <!-- Student List Section -->
                 <div id="studentListSection" class="d-none">
+                    <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Welcome, <span id="adminName"></span></h1>
+                </div>
                     <h2>Student List</h2>
                     <h3 class="d-none" id="noStudent">No Student to display</h3>
                     <table class="table table-striped" id="theTable">
@@ -275,17 +321,37 @@
                     </table>
                 </div>
                 <!-- Add Student Section -->
-                <div id="addStudentSection" class="d-none">
+                <div id="addStudentSection" class="d-none ">
                     <h2>Student Registration</h2>
                     <form id="registerStudentForm">
-                        <div class="mb-3">
+                        <div class="mb-3 col-6">
+                            <label for="academicSession" class="form-label">Select Academic Session</label>
+                            <select class="form-select" id="academicSession">
+                                <option value="">Select Academic Session</option>
+                                <option value="2010/2011">2010/2011 Academic Session</option>
+                                <option value="2011/2012">2011/2012 Academic Session</option>
+                                <option value="2012/2013">2012/2013 Academic Session</option>
+                                <option value="2013/2014">2013/2014 Academic Session</option>
+                                <option value="2014/2015">2014/2015 Academic Session</option>
+                                <option value="2015/2016">2015/2016 Academic Session</option>
+                                <option value="2016/2017">2016/2017 Academic Session</option>
+                                <option value="2017/2018">2017/2018 Academic Session</option>
+                                <option value="2018/2019">2018/2019 Academic Session</option>
+                                <option value="2019/2020">2019/2020 Academic Session</option>
+                                <option value="2020/2021">2020/2021 Academic Session</option>
+                                <option value="2021/2022">2021/2022 Academic Session</option>
+                                <option value="2022/2023">2022/2023 Academic Session</option>
+                                <option value="2023/2024">2023/2024 Academic Session</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6">
                             <label for="studentSelect" class="form-label">Select Student</label>
                             <select class="form-select" id="studentSelect" name="student" required>
                                 <!-- Options will be populated dynamically -->
                             </select>
                         </div>
                         <!-- select faculty -->
-                        <div class="mb-3">
+                        <div class="mb-3 col-6">
                             <label for="faculty" class="form-label">Faculty</label>
                             <select class="form-select" id="faculty" name="faculty" required>
                                 <option value="">Select Faculty</option>
@@ -302,7 +368,7 @@
                             </select>
                         </div>
                         <!-- select Department -->
-                        <div class="form-group">
+                        <div class="form-group col-6">
                             <label for="department">Select Department</label>
                             <select class="form-control" id="department" name="department" required>
                                 <option value="">select Department</option>
@@ -325,7 +391,7 @@
                             </select>
                         </div>
                         <!--select Degree-->
-                        <div class="mb-3">
+                        <div class="mb-3 col-6">
                             <label for="degree_level" class="form-label">Degree Level</label>
                             <select class="form-select" id="degree_level" required>
                                 <option value="">Select Degree Level</option>
@@ -335,68 +401,61 @@
                             </select>
                         </div>
                         <!-- pick course-->
-                        <div class="mb-3">
-                            <label class="form-label">Pick Courses</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="Mobile/Adaptive Technologies"
-                                    id="Mobile/Adaptive Technologies">
-                                <label class="form-check-label" for="Mobile/Adaptive Technologies">Mobile/Adaptive
-                                    Technologies</label>
+                         
+                            
+                        <div class="row">
+                            <!-- First Semester Courses -->
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label">First Semester Courses</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Mobile/Adaptive Technologies" id="MobileAdaptiveTechnologies">
+                                    <label class="form-check-label" for="MobileAdaptiveTechnologies">Mobile/Adaptive Technologies</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Operating System" id="OperatingSystem">
+                                    <label class="form-check-label" for="OperatingSystem">Operating System</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Advance Database Systems" id="AdvanceDatabaseSystems">
+                                    <label class="form-check-label" for="AdvanceDatabaseSystems">Advance Database Systems</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Programming Languages" id="ProgrammingLanguages">
+                                    <label class="form-check-label" for="ProgrammingLanguages">Programming Languages</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Object Oriented Programming" id="ObjectOrientedProgramming">
+                                    <label class="form-check-label" for="ObjectOrientedProgramming">Object Oriented Programming</label>
+                                </div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="Operating System"
-                                    id="Operating System">
-                                <label class="form-check-label" for="Operating System">Operating System</label>
+            
+                            <!-- Second Semester Courses -->
+                            <div class="mb-3 col-md-6">
+                                <label class="form-label">Second Semester Courses</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Advance Computer Algorithms" id="AdvanceComputerAlgorithms">
+                                    <label class="form-check-label" for="AdvanceComputerAlgorithms">Advance Computer Algorithms</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Computer Communications and Network" id="ComputerCommunicationsNetwork">
+                                    <label class="form-check-label" for="ComputerCommunicationsNetwork">Computer Communications and Network</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Advance Computer Architecture" id="AdvanceComputerArchitecture">
+                                    <label class="form-check-label" for="AdvanceComputerArchitecture">Advance Computer Architecture</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Software Engineering" id="SoftwareEngineering">
+                                    <label class="form-check-label" for="SoftwareEngineering">Software Engineering</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="Compiler Design and Construction" id="CompilerDesignConstruction">
+                                    <label class="form-check-label" for="CompilerDesignConstruction">Compiler Design and Construction</label>
+                                </div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="Advance Database Systems"
-                                    id="Advance Database Systems">
-                                <label class="form-check-label" for="Advance Database Systems">Advance Database
-                                    Systems</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="Programming Languages"
-                                    id="Programming Languages">
-                                <label class="form-check-label" for="Programming Languages">Programming
-                                    Languages</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="Object Oriented Programming"
-                                    id="Object Oriented Programming">
-                                <label class="form-check-label" for="Object Oriented Programming">Object Oriented
-                                    Programming</label>
-                            </div></label>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="Advance Computer Algorithms"
-                                id="Advance Computer Algorithms">
-                            <label class="form-check-label" for="Advance Computer Algorithms">Advance Computer
-                                Algorithms</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="BioInformatics"
-                                id="BioInformatics">
-                            <label class="form-check-label" for="BioInformatics">BioInformatics</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="Compiler Design and Construction"
-                                id="Compiler Design and Construction">
-                            <label class="form-check-label" for="Compiler Design and Construction">Compiler Design and Construction</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="Software Engineering"
-                                id="Software Engineering">
-                            <label class="form-check-label" for="Software Engineering">Software Engineering </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="Advance Computer Architecture"
-                                id="Advance Computer Architecture">
-                            <label class="form-check-label" for="Advance Computer Architecture">Advance Computer Architecture</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="Computer Communications and Network"
-                                id="Computer Communications and Network">
-                            <label class="form-check-label" for="Computer Communications and Network">Computer Communications and Network</label>
+                        <div id="courseError" class="text-danger mb-3" style="display: none;">
+                            Please select at least one course.
                         </div>
                         <button type="submit" class="btn btn-primary">
                             <span id="signUpTextRegister">Register Student</span>
@@ -407,8 +466,6 @@
                     </form>
                 </div>
                
-                
-
                 <div id="studentListSection2">
                     <h3 class="mt-4">Students Registered</h3>
                     <div class="virtualClassDiv">
@@ -432,7 +489,7 @@
                 </div>
         </div>
         </main>
-        <footer class="text-center">
+        <footer class="text-center footer  ">
             <p>Developed by <strong>EKPOR JOHN NKANU.</strong> This app facilitates low-bandwidth, real-time virtual classroom sessions. © 2024.</p>
         </footer>
     </div>
@@ -528,8 +585,6 @@
                     console.error('Error loading student list:', error);
                 });
         }
-
-
         //load lecturer
         function loadLecturerList() {
             axios.get('/api/lecturers')
@@ -602,6 +657,7 @@
                 });
         }
         //assign course tp lecturer
+        
         document.getElementById('registerLecturerForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const signUpText2 = document.getElementById('signUpTextRegister');
@@ -611,29 +667,41 @@
             const department2 = document.getElementById('department2').value;
             const degreeLevel2 = document.getElementById('degree_level2').value;
             const courseCode2 = document.getElementById('courseCode2').value;
-            const course2 = document.getElementById('course2').value
-            console.log(name2, faculty2, degreeLevel2, degreeLevel2, courseCode2, course2)
-            // Show spinner and hide text
+            const course2 = document.getElementsByClassName('course2').value
+            const courseError = document.getElementById('courseError');
+            const course1 = document.getElementById('course1');
+            const course22 = document.getElementById('course2');
+            
+            console.log(name2, faculty2,  degreeLevel2, courseCode2, course22)
+            if (course1.value === "" && course22.value === ""){
+                courseError.style.display = 'block';
+            }else{
+                courseError.style.display = 'none';
+                let thecourse=course1.value ||course22.value
+                // Show spinner and hide text
             signUpText2.classList.add('d-none');
             signUpSpinner2.classList.remove('d-none');
             const courseCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
             const courses = Array.from(courseCheckboxes).map(checkbox => checkbox.value);
             const formData = {
-                name2, faculty2, department2, degreeLevel2, courseCode2, course2
+                name2, faculty2, department2, degreeLevel2, courseCode2, thecourse
             }
+            console.log(formData)
             try {
                 const response = await axios.post('/api/assign-course-to-lecturer', formData);
                 console.log('Registration successful:', response.data);
                 // Show spinner and hide text
                 signUpTextRegister.classList.remove('d-none');
                 signUpSpinnerRegister.classList.add('d-none');
-                showAlert('assigning course to lecturer successfully!', 'success');
+                showAlert(response.data.message, 'success');
                 // You can add more code here to handle the successful registration
             } catch (error) {
                 console.error('assigninf course failed:', error);
-                showAlert('Failed to assign course to Lecturer.', 'danger');
+                showAlert(error.response.data.message, 'danger');
                 // You can add more code here to handle the error
             }
+            }
+            
         })
         function showAlert(message, type) {
             const alertPlaceholder2 = document.getElementById('alertPlaceholder2');
@@ -647,8 +715,6 @@
         `;
             alertPlaceholder2.classList.remove('d-none');
         }
-
-
         // register a student
         document.getElementById('registerStudentForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -672,18 +738,18 @@
                 degreeLevel,
                 courses
             };
-
+console.log(formData)
             try {
                 const response = await axios.post('/api/register-student', formData);
                 console.log('Registration successful:', response.data);
                 signUpText.classList.remove('d-none');
                 signUpSpinner.classList.add('d-none');
-                showAlert('Student registered successfully!', 'success');
+                showAlert(response.data.message, 'success');
             } catch (error) {
                 console.error('Registration failed:', error);
                 signUpText.classList.remove('d-none');
                 signUpSpinner.classList.add('d-none');
-                showAlert('Failed to register student.', 'danger');
+                showAlert(error.response.data.message, 'danger');
             }
         });
         function showAlert(message, type) {
@@ -698,7 +764,6 @@
         `;
             alertPlaceholder.classList.remove('d-none');
         }
-
 
         function removeFromCourse(matricNumber, course) {
             axios.post('/api/remove-student-from-course', { matricNumber, course })

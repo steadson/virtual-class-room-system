@@ -1,4 +1,4 @@
-const { type } = require('express/lib/response');
+
 const mongoose = require('mongoose');
 
 const courseSchema = new mongoose.Schema({
@@ -10,6 +10,7 @@ const courseSchema = new mongoose.Schema({
     faculty:{type: String},
     
     department: { type: String },
+    
     students: [
         {
             name: { type: String },
@@ -17,5 +18,5 @@ const courseSchema = new mongoose.Schema({
         }
     ]
 });
-
 module.exports = mongoose.model('Course', courseSchema);
+

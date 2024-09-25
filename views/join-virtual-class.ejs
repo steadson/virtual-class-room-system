@@ -9,21 +9,51 @@
 </head>
 <body>
     <div class="container">
-        <div class="d-flex justify-content-start">
+        <div class="d-flex  justify-content-between align-items-center">
             <h1 id="pageName">Join Virtual Class</h1>
-            <!-- <button id="startRecording" class="btn btn-primary mt-3">Start Recording</button> -->
-            <button id="stopRecording" class="btn btn-danger mt-3" style="display: none;">Stop Recording</button>
-            <video id="recordedVideo" controls style="display:none; margin-top: 20px;"></video>
-            <button id="downloadRecording" class="btn btn-success mt-3" style="display:none;">Download Recording</button>
-            <button type="button" class="btn btn-secondary" style="margin-left:1.5rem;">
+     
+            <button type="button" class="btn btn-secondary " style="margin-left:1.5rem;">
                 <a href="/student/student-dashboard" class="text-light" style="text-decoration:none;">Back To Dashboard</a>
             </button>
+            <button id="startRecording" class="btn btn-primary  flex-end ">Start Recording</button> 
+            <button id="stopRecording" class="btn btn-danger " style="display: none;">Stop Recording</button>
+            <video id="recordedVideo" controls style="display:none; margin-top: 20px;"></video>
+            <button id="downloadRecording" class="btn btn-success " style="display:none;">Download Recording</button>
         </div>
         <div id="root"></div>
     </div>
 
     <script src="https://unpkg.com/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', ()=>{
+            const currentURL = window.location.href; // This gets the current full URL
+            console.log('Current URL:', currentURL);
+
+        // Extract the last part of the URL (identifier, e.g., _1726686365213)
+        const urlIdentifier = currentURL.split('/').pop(); // This gets the last part of the URL
+console.log(urlIdentifier)
+// Send an API request to the backend with the extracted identifier
+fetch('/api/match-virtual-class', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ urlIdentifier })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        console.log('Match found!', data);
+        // You can display the course, start time, etc. on the front end here
+    } else {
+        console.log('No match found.');
+    }
+})
+.catch(error => {
+    console.error('Error:', error);
+});
+
+        })
         const roomID = "<%= roomID %>";
         const userID = Math.floor(Math.random() * 10000) + "";
         const userName = "<%= user.fullName %>";
